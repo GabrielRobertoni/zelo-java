@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Solicitacao invalida')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main class="container error-page text-center py-5">
+    <div class="feature-icon mx-auto"><i class="bi bi-exclamation-triangle"></i></div>
+    <h1 class="display-4">400</h1>
+    <p class="lead" th:text="${mensagem} ?: 'Nao foi possivel concluir a operacao.'">Nao foi possivel concluir a operacao.</p>
+    <a th:href="@{/}" class="btn btn-zelo">Voltar para o inicio</a>
+</main>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

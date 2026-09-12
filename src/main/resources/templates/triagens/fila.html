@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Fila de atencao')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div th:replace="~{fragments/mensagens :: mensagens}"></div>
+
+<main class="container">
+    <h2 class="mb-3">Fila de atencao</h2>
+    <p class="text-muted small">Ordenada automaticamente por nivel de urgencia e ordem de chegada.</p>
+
+    <p class="text-muted" th:if="${#lists.isEmpty(triagens)}">Nenhuma triagem aguardando atencao no momento.</p>
+
+    <div class="row g-3">
+        <div class="col-md-6" th:each="t : ${triagens}">
+            <div class="card card-zelo p-3 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h5 th:text="${t.pet.nome}">Pet</h5>
+                    <span class="badge text-white" th:classappend="'badge-urgencia-' + ${t.nivelUrgencia}" th:text="${t.nivelUrgencia}"></span>
+                </div>
+                <p class="small text-muted mb-1">
+                    Score de risco: <strong th:text="${t.scoreRisco}"></strong> ·
+                    Canal: <span th:text="${t.canal}"></span> ·
+                    Status: <span th:text="${t.statusTriagem}"></span>
+                </p>
+                <p th:text="${t.relato}">Relato</p>
+                <div class="d-flex gap-2 mt-2">
+                    <form th:if="${t.statusTriagem.name() == 'ABERTA'}" th:action="@{'/clinica/triagens/' + ${t.id} + '/encaminhar'}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-sm btn-zelo">Encaminhar para atendimento</button>
+                    </form>
+                    <form th:action="@{'/clinica/triagens/' + ${t.id} + '/concluir'}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-sm btn-outline-success">Concluir</button>
+                    </form>
+                    <form th:action="@{'/clinica/triagens/' + ${t.id} + '/cancelar'}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancelar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

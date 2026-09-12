@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Meu painel')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div th:replace="~{fragments/mensagens :: mensagens}"></div>
+
+<main class="container">
+    <h2 class="mb-4">Ola! Aqui esta o resumo do cuidado com seus pets.</h2>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card card-zelo p-3 h-100">
+                <h5>Meus pets</h5>
+                <p class="text-muted small" th:if="${#lists.isEmpty(pets)}">Voce ainda nao cadastrou nenhum pet.</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center" th:each="pet : ${pets}">
+                        <span th:text="${pet.nome} + ' (' + ${pet.especie} + ')'">Pet</span>
+                        <a th:href="@{'/tutor/pets/' + ${pet.id} + '/editar'}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                    </li>
+                </ul>
+                <a th:href="@{/tutor/pets/novo}" class="btn btn-zelo mt-3">Cadastrar pet</a>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card card-zelo p-3 h-100">
+                <h5>Plano de cuidado pendente</h5>
+                <p class="text-muted small" th:if="${#lists.isEmpty(alertasPendentes)}">Nenhum cuidado pendente no momento. Tudo em dia!</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" th:each="alerta : ${alertasPendentes}">
+                        <div class="d-flex justify-content-between">
+                            <strong th:text="${alerta.titulo}">Titulo</strong>
+                            <span class="badge text-bg-secondary" th:text="${alerta.tipoAlerta}">Tipo</span>
+                        </div>
+                        <div class="small text-muted">
+                            <span th:text="${alerta.pet.nome}">Pet</span> ·
+                            previsto para <span th:text="${#temporals.format(alerta.dataPrevista, 'dd/MM/yyyy')}">data</span>
+                        </div>
+                    </li>
+                </ul>
+                <a th:href="@{/tutor/alertas}" class="btn btn-outline-secondary mt-3">Ver plano de cuidado completo</a>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card card-zelo p-3 h-100">
+                <h5>Triagens recentes</h5>
+                <p class="text-muted small" th:if="${#lists.isEmpty(triagensRecentes)}">Nenhuma triagem registrada ainda.</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" th:each="t : ${triagensRecentes}">
+                        <div class="d-flex justify-content-between">
+                            <span th:text="${t.pet.nome}">Pet</span>
+                            <span th:text="${t.nivelUrgencia}" th:classappend="'badge badge-urgencia-' + ${t.nivelUrgencia}" class="badge text-white"></span>
+                        </div>
+                        <div class="small text-muted" th:text="${t.statusTriagem}">Status</div>
+                    </li>
+                </ul>
+                <a th:href="@{/tutor/triagens/nova}" class="btn btn-zelo mt-3">Registrar nova triagem</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

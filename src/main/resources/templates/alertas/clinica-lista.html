@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Alertas')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div th:replace="~{fragments/mensagens :: mensagens}"></div>
+
+<main class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Alertas da clinica</h2>
+        <a th:href="@{/clinica/alertas/novo}" class="btn btn-zelo">Novo alerta</a>
+    </div>
+
+    <p class="text-muted" th:if="${#lists.isEmpty(alertas)}">Nenhum alerta cadastrado ainda.</p>
+
+    <div class="table-responsive" th:if="${!#lists.isEmpty(alertas)}">
+        <table class="table table-hover align-middle bg-white">
+            <thead>
+            <tr>
+                <th>Pet</th>
+                <th>Tipo</th>
+                <th>Titulo</th>
+                <th>Previsto</th>
+                <th>Status</th>
+                <th>Acoes</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="a : ${alertas}">
+                <td th:text="${a.pet.nome}">Pet</td>
+                <td th:text="${a.tipoAlerta}">Tipo</td>
+                <td th:text="${a.titulo}">Titulo</td>
+                <td th:text="${#temporals.format(a.dataPrevista, 'dd/MM/yyyy')}">Data</td>
+                <td th:text="${a.statusAlerta}">Status</td>
+                <td class="d-flex gap-2">
+                    <form th:if="${a.statusAlerta.name() == 'PENDENTE'}" th:action="@{'/clinica/alertas/' + ${a.id} + '/enviar'}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Enviar</button>
+                    </form>
+                    <form th:if="${a.statusAlerta.name() == 'PENDENTE' or a.statusAlerta.name() == 'ENVIADO'}"
+                          th:action="@{'/clinica/alertas/' + ${a.id} + '/cancelar'}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancelar</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+target/
+*.class
+*.log
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.DS_Store
+HELP.md
+
+# Credenciais reais do Oracle (ver src/main/resources/application-oracle.yml)
+# - NUNCA deve ser commitado, o repositorio e publico.
+src/main/resources/application-oracle.yml

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Criar conta')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<main class="container py-5" style="max-width: 560px;">
+    <div class="text-center mb-4">
+        <span class="hero-eyebrow"><i class="bi bi-heart-pulse-fill"></i> Comece a cuidar melhor</span>
+    </div>
+    <div class="card card-zelo p-4">
+        <h3 class="mb-3">Criar conta de tutor</h3>
+
+        <form th:action="@{/registro}" th:object="${form}" method="post" novalidate>
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="mb-3">
+                <label class="form-label">Nome completo</label>
+                <input type="text" th:field="*{nome}" class="form-control" th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid'"/>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">E-mail</label>
+                <input type="email" th:field="*{email}" class="form-control" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"/>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Senha</label>
+                    <input type="password" th:field="*{senha}" class="form-control" th:classappend="${#fields.hasErrors('senha')} ? 'is-invalid'"/>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('senha')}" th:errors="*{senha}"></div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Confirmar senha</label>
+                    <input type="password" th:field="*{confirmarSenha}" class="form-control" th:classappend="${#fields.hasErrors('confirmarSenha')} ? 'is-invalid'"/>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('confirmarSenha')}" th:errors="*{confirmarSenha}"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Telefone</label>
+                <input type="text" th:field="*{telefone}" class="form-control"/>
+            </div>
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label class="form-label">Cidade</label>
+                    <input type="text" th:field="*{cidade}" class="form-control"/>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">UF</label>
+                    <input type="text" th:field="*{estado}" maxlength="2" class="form-control"/>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-zelo w-100">Criar conta</button>
+        </form>
+        <p class="mt-3">Ja tem conta? <a th:href="@{/login}">Entrar</a>.</p>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

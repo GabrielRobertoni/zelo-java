@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Nova triagem')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<main class="container" style="max-width: 640px;">
+    <div class="card card-zelo p-4">
+        <h3 class="mb-1">Registrar triagem</h3>
+        <p class="text-muted small mb-3">Conte o que esta acontecendo com seu pet. Nosso sistema classifica a
+            urgencia automaticamente e encaminha para a clinica escolhida.</p>
+
+        <p class="text-muted" th:if="${#lists.isEmpty(pets)}">
+            Voce precisa <a th:href="@{/tutor/pets/novo}">cadastrar um pet</a> antes de registrar uma triagem.
+        </p>
+
+        <form th:if="${!#lists.isEmpty(pets)}" th:action="@{/tutor/triagens}" th:object="${form}" method="post" novalidate>
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="mb-3">
+                <label class="form-label">Pet</label>
+                <select th:field="*{petId}" class="form-select" th:classappend="${#fields.hasErrors('petId')} ? 'is-invalid'">
+                    <option value="">Selecione</option>
+                    <option th:each="pet : ${pets}" th:value="${pet.id}" th:text="${pet.nome}"></option>
+                </select>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('petId')}" th:errors="*{petId}"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Clinica</label>
+                <select th:field="*{clinicaId}" class="form-select" th:classappend="${#fields.hasErrors('clinicaId')} ? 'is-invalid'">
+                    <option value="">Selecione</option>
+                    <option th:each="c : ${clinicas}" th:value="${c.id}" th:text="${c.nome}"></option>
+                </select>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('clinicaId')}" th:errors="*{clinicaId}"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Canal do relato</label>
+                <select th:field="*{canal}" class="form-select" th:classappend="${#fields.hasErrors('canal')} ? 'is-invalid'">
+                    <option value="">Selecione</option>
+                    <option th:each="c : ${canais}" th:value="${c}" th:text="${c}"></option>
+                </select>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('canal')}" th:errors="*{canal}"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">O que esta acontecendo?</label>
+                <textarea th:field="*{relato}" rows="4" class="form-control" th:classappend="${#fields.hasErrors('relato')} ? 'is-invalid'"
+                          placeholder="Ex.: Meu cachorro vomitou duas vezes hoje e esta sem apetite desde ontem."></textarea>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('relato')}" th:errors="*{relato}"></div>
+            </div>
+            <button type="submit" class="btn btn-zelo w-100">Enviar triagem</button>
+        </form>
+    </div>
+</main>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

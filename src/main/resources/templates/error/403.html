@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Acesso negado')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main class="container error-page text-center py-5">
+    <div class="feature-icon mx-auto"><i class="bi bi-shield-lock"></i></div>
+    <h1 class="display-4">403</h1>
+    <p class="lead">Seu perfil nao tem permissao para acessar esta pagina.</p>
+    <a th:href="@{/}" class="btn btn-zelo">Voltar para o inicio</a>
+</main>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

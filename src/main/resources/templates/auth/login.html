@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Entrar')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<main class="container py-5" style="max-width: 480px;">
+    <div class="text-center mb-4">
+        <span class="hero-eyebrow"><i class="bi bi-heart-pulse-fill"></i> Bem-vindo de volta</span>
+    </div>
+    <div class="card card-zelo p-4">
+        <h3 class="mb-3">Entrar</h3>
+
+        <div th:if="${param.erro}" class="alert alert-danger">E-mail ou senha invalidos.</div>
+        <div th:if="${param.sair}" class="alert alert-success">Sessao encerrada com sucesso.</div>
+        <div th:if="${param.registrado}" class="alert alert-success">Conta criada com sucesso! Entre com suas credenciais.</div>
+
+        <form th:action="@{/login}" method="post">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="mb-3">
+                <label class="form-label">E-mail</label>
+                <input type="email" name="username" class="form-control" required autofocus/>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Senha</label>
+                <input type="password" name="password" class="form-control" required/>
+            </div>
+            <button type="submit" class="btn btn-zelo w-100">Entrar</button>
+        </form>
+
+        <hr/>
+        <p class="mb-1 small text-muted">Contas de demonstracao (senha <strong>Zelo@123</strong> para todas):</p>
+        <ul class="small text-muted">
+            <li>Tutor: tutor@zelo.com.br</li>
+            <li>Veterinario: veterinario@zelo.com.br</li>
+            <li>Gestor: gestor@zelo.com.br</li>
+        </ul>
+        <p class="mt-2">Ainda nao tem conta? <a th:href="@{/registro}">Cadastre-se como tutor</a>.</p>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

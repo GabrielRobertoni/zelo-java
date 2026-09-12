@@ -1,0 +1,162 @@
+spring:
+  application:
+    name: zelo-java
+  profiles:
+    # Perfil padrao alterado de "dev" para "oracle" a pedido do aluno, apos
+    # orientacao do professor de que o ideal e a aplicacao persistir de
+    # verdade no banco Oracle da FIAP, e nao só em H2 em memoria. A partir
+    # de agora, rodar a aplicacao sem especificar nenhum perfil ja tenta
+    # conectar no Oracle real - ver o bloco "on-profile: oracle" abaixo para
+    # as variaveis de ambiente obrigatorias (ORACLE_USER/ORACLE_PASSWORD).
+    # Para voltar a rodar local com H2 (sem depender de rede/credenciais),
+    # defina explicitamente SPRING_PROFILES_ACTIVE=dev na Run Configuration.
+    active: oracle
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8080
+
+logging:
+  level:
+    br.com.fiap.zelo: INFO
+
+# Segredo usado para assinar o token da API REST consumida pelo aplicativo
+# mobile (ver br.com.fiap.zelo.security.ApiTokenService). Pode ser
+# sobrescrito com a variavel de ambiente ZELO_API_TOKEN_SECRET; o valor
+# abaixo serve apenas para desenvolvimento/demonstracao.
+zelo:
+  api:
+    token-secret: ${ZELO_API_TOKEN_SECRET:change-this-secret-in-production}
+
+# NOTA sobre "ddl-auto: none" (em todos os perfis abaixo): o Flyway e o unico
+# dono do schema (requisito de versionamento de banco da Sprint 3) - o
+# Hibernate nunca cria nem altera tabelas. Ele tambem nao valida o schema no
+# boot (ddl-auto: validate): Oracle nao possui um tipo nativo BIGINT (tudo e
+# NUMBER), entao o driver JDBC do Oracle - e o H2 imitando-o em MODE=Oracle -
+# sempre relatam uma coluna de identificador como NUMERIC, nunca como BIGINT,
+# o que faz o Hibernate recusar a subir mesmo com o schema 100% correto. Essa
+# e uma limitacao conhecida da combinacao Hibernate+Oracle, nao um erro deste
+# schema; "none" e a configuracao padrao recomendada quando o Flyway ja e
+# a fonte da verdade do schema.
+
+---
+# ---------------------------------------------------------------------------
+# Perfil "dev": banco H2 em memoria, em modo de compatibilidade Oracle, para
+# que as migrations do Flyway (escritas com tipos/sintaxe Oracle) rodem sem
+# exigir uma instancia Oracle real. Deixou de ser o perfil padrao (ver
+# comentario acima, em spring.profiles.active) - use-o explicitamente
+# (SPRING_PROFILES_ACTIVE=dev) para desenvolver ou testar sem depender de
+# rede/credenciais do Oracle real (por exemplo, sem acesso a rede da FIAP).
+# ---------------------------------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: "jdbc:h2:mem:zelodb;MODE=Oracle;DB_CLOSE_DELAY=-1"
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/dev
+
+---
+# ---------------------------------------------------------------------------
+# Perfil "oracle" (PADRAO a partir desta versao - ver spring.profiles.active
+# no topo do arquivo): aponta para a instancia Oracle real do time de Banco
+# de Dados (schema criado pelo script deles - zelo_criar.sql), para que os
+# dados persistam de verdade entre execucoes, e nao só durante o processo
+# (que era o caso do H2 em memoria do perfil "dev").
+#
+# DECISAO DO GRUPO: para que quem baixar o projeto - incluindo o professor
+# na correcao - consiga rodar direto, sem nenhuma configuracao extra, os
+# valores depois do ":" nas duas linhas de username/password abaixo devem
+# ser substituidos manualmente pela credencial Oracle FIAP real cedida pelo
+# integrante responsavel pelo banco (RM 562380), no lugar dos marcadores
+# "PREENCHER_USUARIO_REAL"/"PREENCHER_SENHA_REAL". E uma decisao consciente
+# do grupo, ciente de que o repositorio e publico - nao e um valor de
+# exemplo esquecido.
+#
+# Quem preferir usar a propria credencial sem alterar este arquivo (por
+# exemplo outro integrante testando localmente) pode sobrescrever definindo
+# as variaveis de ambiente ORACLE_USER e ORACLE_PASSWORD (em Run/Debug
+# Configurations no IntelliJ, ou no sistema operacional), ou criando um
+# arquivo local "application-oracle.yml" (nao versionado - ver .gitignore)
+# so com "spring.datasource.username"/"password". Ver README para
+# instrucoes completas, incluindo como rodar com H2 (perfil "dev") quando
+# nao houver acesso a rede da FIAP.
+#
+# ATENCAO: "flyway.locations" aqui aponta para uma pasta DIFERENTE
+# (db/migration/oracle) da usada em dev/test (db/migration/dev). O motivo:
+# as tabelas principais (T_CH_USUARIO, T_CH_PET, T_CH_TRIAGEM etc.) ja sao
+# criadas pelo script do proprio time de Banco de Dados - se o Flyway do Java
+# tentasse recria-las aqui, o boot falharia com "table already exists". Este
+# perfil so aplica a tabela extra que a aplicacao Java precisa (equipe da
+# clinica) e uma massa de dados minima de login - ver os comentarios dentro
+# de db/migration/oracle/V1__create_equipe_table.sql e V2__seed_data.sql.
+#
+# ATENCAO 2: "baseline-on-migrate: true" e obrigatorio aqui. O schema do
+# Nicolas ja chega "sujo" pro Flyway (tabelas criadas por fora, via
+# zelo_criar.sql) - sem isso, o boot falha com "Found non-empty schema(s)
+# ... but no schema history table" na primeira vez que qualquer um do grupo
+# conectar. O baseline diz pro Flyway "trate tudo que ja existe como ponto de
+# partida (versao 0), sem tentar recriar nada, e so aplique migrations com
+# versao MAIOR que essa". "baseline-version: 0" e essencial: como nossas
+# migrations comecam em V1 (nao V2), se deixassemos o padrao do Flyway
+# (baseline-version=1), ele acharia que V1 ja foi aplicada como parte do
+# baseline e pularia silenciosamente a criacao de T_CH_CLINICA_EQUIPE.
+# ---------------------------------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: oracle
+  datasource:
+    url: ${ORACLE_URL:jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL}
+    driver-class-name: oracle.jdbc.OracleDriver
+    username: ${ORACLE_USER:rm562380}
+    password: ${ORACLE_PASSWORD:040207}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.OracleDialect
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/oracle
+    baseline-on-migrate: true
+    baseline-version: "0"
+
+---
+# ---------------------------------------------------------------------------
+# Perfil "test": usado pela suite automatizada (@ActiveProfiles("test")).
+# Cada teste sobe um schema H2 novo e isolado, com o mesmo schema do perfil
+# "dev" (espelha o DDL real do time de Banco de Dados).
+# ---------------------------------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: "jdbc:h2:mem:zelodb-test-${random.uuid};MODE=Oracle;DB_CLOSE_DELAY=-1"
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/dev

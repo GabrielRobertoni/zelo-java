@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${titulo})}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<main class="container" style="max-width: 640px;">
+    <div class="card card-zelo p-4">
+        <h3 class="mb-3" th:text="${titulo}">Alerta</h3>
+
+        <p class="text-muted" th:if="${#lists.isEmpty(pets)}">Nenhum pet disponivel para selecionar.</p>
+
+        <form th:if="${!#lists.isEmpty(pets)}" th:action="@{${acao}}" th:object="${form}" method="post" novalidate>
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="mb-3">
+                <label class="form-label">Pet</label>
+                <select th:field="*{petId}" class="form-select" th:classappend="${#fields.hasErrors('petId')} ? 'is-invalid'">
+                    <option value="">Selecione</option>
+                    <option th:each="pet : ${pets}" th:value="${pet.id}" th:text="${pet.nome}"></option>
+                </select>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('petId')}" th:errors="*{petId}"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tipo</label>
+                <select th:field="*{tipoAlerta}" class="form-select" th:classappend="${#fields.hasErrors('tipoAlerta')} ? 'is-invalid'">
+                    <option value="">Selecione</option>
+                    <option th:each="tp : ${tipos}" th:value="${tp}" th:text="${tp}"></option>
+                </select>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('tipoAlerta')}" th:errors="*{tipoAlerta}"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Titulo</label>
+                <input type="text" th:field="*{titulo}" class="form-control" th:classappend="${#fields.hasErrors('titulo')} ? 'is-invalid'"
+                       placeholder="Ex.: Vacina antirrabica"/>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('titulo')}" th:errors="*{titulo}"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Mensagem (opcional)</label>
+                <textarea th:field="*{mensagem}" rows="3" class="form-control" th:classappend="${#fields.hasErrors('mensagem')} ? 'is-invalid'"></textarea>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('mensagem')}" th:errors="*{mensagem}"></div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Data prevista</label>
+                <input type="date" th:field="*{dataPrevista}" class="form-control" th:classappend="${#fields.hasErrors('dataPrevista')} ? 'is-invalid'"/>
+                <div class="invalid-feedback" th:if="${#fields.hasErrors('dataPrevista')}" th:errors="*{dataPrevista}"></div>
+            </div>
+            <button type="submit" class="btn btn-zelo w-100">Salvar</button>
+        </form>
+    </div>
+</main>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

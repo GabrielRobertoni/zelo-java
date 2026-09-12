@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Minhas triagens')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div th:replace="~{fragments/mensagens :: mensagens}"></div>
+
+<main class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Minhas triagens</h2>
+        <a th:href="@{/tutor/triagens/nova}" class="btn btn-zelo">Registrar nova triagem</a>
+    </div>
+
+    <p class="text-muted" th:if="${#lists.isEmpty(triagens)}">Voce ainda nao registrou nenhuma triagem.</p>
+
+    <div class="table-responsive" th:if="${!#lists.isEmpty(triagens)}">
+        <table class="table table-hover align-middle bg-white">
+            <thead>
+            <tr>
+                <th>Pet</th>
+                <th>Clinica</th>
+                <th>Urgencia</th>
+                <th>Status</th>
+                <th>Relato</th>
+                <th>Acoes</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="t : ${triagens}">
+                <td th:text="${t.pet.nome}">Pet</td>
+                <td th:text="${t.clinica != null ? t.clinica.nome : '-'}">Clinica</td>
+                <td><span class="badge text-white" th:classappend="'badge-urgencia-' + ${t.nivelUrgencia}" th:text="${t.nivelUrgencia}"></span></td>
+                <td th:text="${t.statusTriagem}">Status</td>
+                <td class="small" th:text="${#strings.abbreviate(t.relato, 60)}">Relato</td>
+                <td>
+                    <form th:if="${t.statusTriagem.name() == 'ABERTA'}" th:action="@{'/tutor/triagens/' + ${t.id} + '/cancelar'}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancelar</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>

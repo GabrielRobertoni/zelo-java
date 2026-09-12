@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Painel da clinica')}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div th:replace="~{fragments/mensagens :: mensagens}"></div>
+
+<main class="container">
+    <h2 class="mb-1" th:text="${clinica.nome}">Clinica</h2>
+    <p class="text-muted mb-4">
+        <span th:text="${clinica.cidade} + '/' + ${clinica.estado}">Cidade/UF</span> ·
+        <span th:text="${clinica.isAtiva()} ? 'Ativa' : 'Indisponivel'">Status</span>
+    </p>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card card-zelo p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Fila de atencao</h5>
+                    <a th:href="@{/clinica/triagens}" class="btn btn-sm btn-outline-secondary">Ver tudo</a>
+                </div>
+                <p class="text-muted small" th:if="${#lists.isEmpty(filaDeAtencao)}">Nenhuma triagem aguardando atencao no momento.</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center" th:each="t : ${filaDeAtencao}">
+                        <div>
+                            <strong th:text="${t.pet.nome}">Pet</strong>
+                            <span class="small text-muted" th:text="'· ' + ${t.statusTriagem}"></span>
+                        </div>
+                        <span class="badge text-white" th:classappend="'badge-urgencia-' + ${t.nivelUrgencia}" th:text="${t.nivelUrgencia}"></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card card-zelo p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Alertas emitidos</h5>
+                    <a th:href="@{/clinica/alertas}" class="btn btn-sm btn-outline-secondary">Ver tudo</a>
+                </div>
+                <p class="text-muted small" th:if="${#lists.isEmpty(alertas)}">Nenhum alerta cadastrado ainda.</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" th:each="a : ${alertas}">
+                        <div class="d-flex justify-content-between">
+                            <span th:text="${a.titulo}">Titulo</span>
+                            <span class="badge text-bg-secondary" th:text="${a.statusAlerta}"></span>
+                        </div>
+                        <div class="small text-muted" th:text="${a.pet.nome}">Pet</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/scripts :: scripts}"></div>
+</body>
+</html>
