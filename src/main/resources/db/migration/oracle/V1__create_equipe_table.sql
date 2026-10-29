@@ -2,7 +2,7 @@
 -- Projeto Zelo - Java Advanced (Sprint 3)
 -- Migration V1 (perfil "oracle" - instancia Oracle real do time de Banco de
 -- Dados): NAO recria as tabelas principais - elas ja sao criadas pelo script
--- proprio do time de Banco de Dados (zelo_criar.sql), que roda ANTES desta
+-- proprio do time de Banco de Dados (2TDSR_CodigoSql_Zelo.sql), que roda ANTES desta
 -- migration (ver README, secao "Integracao com o time de Banco de Dados").
 --
 -- A UNICA tabela criada aqui e T_CH_CLINICA_EQUIPE, que nao faz parte do DDL

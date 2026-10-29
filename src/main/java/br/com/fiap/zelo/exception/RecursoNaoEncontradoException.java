@@ -1,7 +1,7 @@
 package br.com.fiap.zelo.exception;
 
-/** Lancada quando um recurso (pet, triagem, alerta, clinica...) nao e encontrado ou nao pertence ao usuario logado. */
-public class RecursoNaoEncontradoException extends RuntimeException {
+/** Recurso inexistente ou que não pertence ao usuário autenticado. */
+public class RecursoNaoEncontradoException extends ZeloException {
     public RecursoNaoEncontradoException(String mensagem) {
         super(mensagem);
     }

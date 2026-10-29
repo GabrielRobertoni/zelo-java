@@ -23,13 +23,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- * Cobre o fluxo completo nº 2 exigido pela Sprint 3 (Alertas / Plano de
- * Cuidado - Ciclo Zelo): criacao pelo tutor e pela clinica, disparo,
- * confirmacao e as transicoes de cancelamento.
- */
 @ExtendWith(MockitoExtension.class)
 class AlertaServiceTest {
 
@@ -39,134 +36,105 @@ class AlertaServiceTest {
     private PetRepository petRepository;
     @Mock
     private ClinicaRepository clinicaRepository;
+    @Mock
+    private PetService petService;
+    @Mock
+    private PacienteService pacienteService;
 
     private AlertaService alertaService;
-
-    private Pet pet;
-    private Clinica clinica;
+    private final Pet pet = Pet.builder().id(1L).nome("Rex").build();
+    private final Clinica clinica = Clinica.builder().id(100L).nome("Clínica Amiga Bicho").build();
 
     @BeforeEach
     void setUp() {
-        alertaService = new AlertaService(alertaRepository, petRepository, clinicaRepository);
-        pet = Pet.builder().id(1L).nome("Rex").build();
-        clinica = Clinica.builder().id(100L).nome("Clinica Amiga Bicho").ativa("S").build();
+        alertaService = new AlertaService(alertaRepository, petRepository, clinicaRepository, petService, pacienteService);
     }
 
-    private AlertaForm formValido() {
+    private AlertaForm formulario() {
         AlertaForm form = new AlertaForm();
         form.setPetId(1L);
         form.setTipoAlerta(TipoAlerta.VACINA);
-        form.setTitulo("Vacina antirrabica");
-        form.setDataPrevista(LocalDate.now().plusDays(7));
+        form.setTitulo("  Reforço da V10  ");
+        form.setMensagem("   ");
+        form.setDataPrevista(LocalDate.now().plusDays(10));
         return form;
     }
 
-    @Test
-    void criarComoTutorExigeQuePetPertencaAoTutor() {
-        when(petRepository.existeVinculoComTutor(1L, 10L)).thenReturn(false);
-
-        assertThatThrownBy(() -> alertaService.criarComoTutor(10L, formValido()))
-                .isInstanceOf(RecursoNaoEncontradoException.class);
-
-        verifyNoInteractions(alertaRepository);
+    private Alerta alertaDaClinica(StatusAlerta status) {
+        return Alerta.builder().id(5L).pet(pet).clinica(clinica).tipoAlerta(TipoAlerta.VACINA).titulo("V10")
+                .dataPrevista(LocalDate.now()).statusAlerta(status).build();
     }
 
     @Test
-    void criarComoTutorPersisteAlertaSemClinicaEComStatusPendente() {
-        when(petRepository.existeVinculoComTutor(1L, 10L)).thenReturn(true);
-        when(petRepository.findById(1L)).thenReturn(Optional.of(pet));
-        when(alertaRepository.save(any(Alerta.class))).thenAnswer(inv -> inv.getArgument(0));
+    void tutorCriaLembretePessoalSemClinica() {
+        when(petService.buscarDoTutor(1L, 10L)).thenReturn(pet);
+        when(alertaRepository.save(any(Alerta.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        Alerta alerta = alertaService.criarComoTutor(10L, formValido());
+        Alerta alerta = alertaService.criarComoTutor(10L, formulario());
 
         assertThat(alerta.getClinica()).isNull();
         assertThat(alerta.getStatusAlerta()).isEqualTo(StatusAlerta.PENDENTE);
-        assertThat(alerta.getPet()).isEqualTo(pet);
+        assertThat(alerta.getTitulo()).isEqualTo("Reforço da V10");
+        assertThat(alerta.getMensagem()).isNull();
     }
 
     @Test
-    void criarComoClinicaPersisteAlertaVinculadoAClinica() {
-        when(petRepository.findById(1L)).thenReturn(Optional.of(pet));
+    void clinicaRecomendaCuidadoAoProprioPaciente() {
+        when(pacienteService.buscarPaciente(1L, 100L)).thenReturn(pet);
         when(clinicaRepository.findById(100L)).thenReturn(Optional.of(clinica));
-        when(alertaRepository.save(any(Alerta.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(alertaRepository.save(any(Alerta.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-        Alerta alerta = alertaService.criarComoClinica(100L, formValido());
-
-        assertThat(alerta.getClinica()).isEqualTo(clinica);
-        assertThat(alerta.getStatusAlerta()).isEqualTo(StatusAlerta.PENDENTE);
+        assertThat(alertaService.criarComoClinica(100L, formulario()).getClinica()).isEqualTo(clinica);
     }
 
     @Test
-    void marcarComoEnviadoSoPermitidoQuandoPendente() {
-        Alerta alerta = alertaComStatus(StatusAlerta.ENVIADO);
-        when(alertaRepository.findById(5L)).thenReturn(Optional.of(alerta));
+    void clinicaNaoRecomendaCuidadoAPetQueNaoEPaciente() {
+        when(pacienteService.buscarPaciente(1L, 100L)).thenThrow(new RecursoNaoEncontradoException("Não é paciente"));
 
-        assertThatThrownBy(() -> alertaService.marcarComoEnviado(5L, 100L))
-                .isInstanceOf(RegraNegocioException.class);
-    }
-
-    @Test
-    void marcarComoEnviadoComSucessoRegistraDataDeEnvio() {
-        Alerta alerta = alertaComStatus(StatusAlerta.PENDENTE);
-        when(alertaRepository.findById(5L)).thenReturn(Optional.of(alerta));
-        when(alertaRepository.save(any(Alerta.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Alerta resultado = alertaService.marcarComoEnviado(5L, 100L);
-
-        assertThat(resultado.getStatusAlerta()).isEqualTo(StatusAlerta.ENVIADO);
-        assertThat(resultado.getDataEnvio()).isNotNull();
-    }
-
-    @Test
-    void confirmarAlertaJaFinalizadoLancaExcecao() {
-        Alerta alerta = alertaComStatus(StatusAlerta.CONCLUIDO);
-        when(alertaRepository.findById(5L)).thenReturn(Optional.of(alerta));
-        when(petRepository.existeVinculoComTutor(1L, 10L)).thenReturn(true);
-
-        assertThatThrownBy(() -> alertaService.confirmar(5L, 10L))
-                .isInstanceOf(RegraNegocioException.class);
-    }
-
-    @Test
-    void confirmarAlertaDePetDeOutroTutorLancaExcecao() {
-        Alerta alerta = alertaComStatus(StatusAlerta.PENDENTE);
-        when(alertaRepository.findById(5L)).thenReturn(Optional.of(alerta));
-        when(petRepository.existeVinculoComTutor(1L, 999L)).thenReturn(false);
-
-        assertThatThrownBy(() -> alertaService.confirmar(5L, 999L))
+        assertThatThrownBy(() -> alertaService.criarComoClinica(100L, formulario()))
                 .isInstanceOf(RecursoNaoEncontradoException.class);
+        verify(alertaRepository, never()).save(any());
     }
 
     @Test
-    void confirmarComSucessoConcluiOAlerta() {
-        Alerta alerta = alertaComStatus(StatusAlerta.ENVIADO);
+    void clinicaEnviaLembretePendente() {
+        Alerta alerta = alertaDaClinica(StatusAlerta.PENDENTE);
+        when(alertaRepository.findById(5L)).thenReturn(Optional.of(alerta));
+        when(alertaRepository.save(alerta)).thenReturn(alerta);
+
+        assertThat(alertaService.marcarComoEnviado(5L, 100L).getStatusAlerta()).isEqualTo(StatusAlerta.ENVIADO);
+    }
+
+    @Test
+    void clinicaNaoMexeEmAlertaDeOutraClinica() {
+        when(alertaRepository.findById(5L)).thenReturn(Optional.of(alertaDaClinica(StatusAlerta.PENDENTE)));
+
+        assertThatThrownBy(() -> alertaService.cancelarPelaClinica(5L, 200L)).isInstanceOf(RecursoNaoEncontradoException.class);
+    }
+
+    @Test
+    void tutorConfirmaCuidadoDoProprioPet() {
+        Alerta alerta = alertaDaClinica(StatusAlerta.ENVIADO);
         when(alertaRepository.findById(5L)).thenReturn(Optional.of(alerta));
         when(petRepository.existeVinculoComTutor(1L, 10L)).thenReturn(true);
-        when(alertaRepository.save(any(Alerta.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(alertaRepository.save(alerta)).thenReturn(alerta);
 
-        Alerta resultado = alertaService.confirmar(5L, 10L);
-
-        assertThat(resultado.getStatusAlerta()).isEqualTo(StatusAlerta.CONCLUIDO);
+        assertThat(alertaService.confirmar(5L, 10L).getStatusAlerta()).isEqualTo(StatusAlerta.CONCLUIDO);
     }
 
     @Test
-    void cancelarAlertaJaCanceladoLancaExcecao() {
-        Alerta alerta = alertaComStatus(StatusAlerta.CANCELADO);
-        when(alertaRepository.findById(5L)).thenReturn(Optional.of(alerta));
+    void tutorNaoConfirmaCuidadoDePetDeOutroTutor() {
+        when(alertaRepository.findById(5L)).thenReturn(Optional.of(alertaDaClinica(StatusAlerta.PENDENTE)));
+        when(petRepository.existeVinculoComTutor(1L, 11L)).thenReturn(false);
 
-        assertThatThrownBy(() -> alertaService.cancelarPelaClinica(5L, 100L))
-                .isInstanceOf(RegraNegocioException.class);
+        assertThatThrownBy(() -> alertaService.confirmar(5L, 11L)).isInstanceOf(RecursoNaoEncontradoException.class);
     }
 
-    private Alerta alertaComStatus(StatusAlerta status) {
-        return Alerta.builder()
-                .id(5L)
-                .pet(pet)
-                .clinica(clinica)
-                .tipoAlerta(TipoAlerta.VACINA)
-                .titulo("Vacina antirrabica")
-                .dataPrevista(LocalDate.now().plusDays(7))
-                .statusAlerta(status)
-                .build();
+    @Test
+    void naoConfirmaCuidadoJaCancelado() {
+        when(alertaRepository.findById(5L)).thenReturn(Optional.of(alertaDaClinica(StatusAlerta.CANCELADO)));
+        when(petRepository.existeVinculoComTutor(1L, 10L)).thenReturn(true);
+
+        assertThatThrownBy(() -> alertaService.confirmar(5L, 10L)).isInstanceOf(RegraNegocioException.class);
     }
 }

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head><title>Meu painel</title></head>
+<body>
+<main layout:fragment="conteudo" class="container">
+    <section class="painel-cabecalho">
+        <div>
+            <span class="painel-eyebrow"><i class="bi bi-heart-pulse"></i> Meu painel</span>
+            <h1>Olá, <span sec:authentication="principal.usuario.nome">tutor</span>!</h1>
+            <p>Este é o resumo do cuidado com os seus pets.</p>
+        </div>
+        <div class="painel-acoes">
+            <a th:href="@{/tutor/triagens/nova}" class="btn btn-light"><i class="bi bi-clipboard2-pulse"></i> Registrar triagem</a>
+            <a th:href="@{/tutor/pets/novo}" class="btn btn-outline-light"><i class="bi bi-plus-lg"></i> Novo pet</a>
+        </div>
+    </section>
+
+    <div th:replace="~{fragments/componentes :: indicadores(${painel.indicadores})}"></div>
+
+    <h2 class="titulo-secao"><span class="icone-tom" aria-hidden="true"><i class="bi bi-heart"></i></span> Situação de cada pet</h2>
+    <th:block th:if="${#lists.isEmpty(painel.pets)}">
+        <div class="card card-zelo p-4 mb-4 text-center">
+            <div th:replace="~{fragments/componentes :: vazio('bi-heart', 'Você ainda não cadastrou nenhum pet.')}"></div>
+            <a th:href="@{/tutor/pets/novo}" class="btn btn-zelo mt-3 mx-auto">Cadastrar meu primeiro pet</a>
+        </div>
+    </th:block>
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-4" th:each="s : ${painel.pets}">
+            <a th:href="@{'/tutor/pets/' + ${s.pet.id}}" class="card-pet" th:classappend="'tom-' + ${s.situacao.tom}">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="pet-avatar" aria-hidden="true"><i class="bi"
+                              th:classappend="${s.pet.especie.name() == 'GATO'} ? 'bi-moon-stars' : (${s.pet.especie.name() == 'CAO'} ? 'bi-heart' : 'bi-flower1')"></i></span>
+                        <div>
+                            <h3 class="h5 mb-0" th:text="${s.pet.nome}">Pet</h3>
+                            <span class="small text-muted" th:text="${s.pet.especie.rotulo} + ' · ' + ${s.pet.idadeDescricao}">Espécie</span>
+                        </div>
+                    </div>
+                    <span class="badge badge-situacao" th:text="${s.situacao.rotulo}">Situação</span>
+                </div>
+                <dl class="mb-0 mt-3 small">
+                    <dt>Próximo cuidado</dt>
+                    <dd th:if="${s.proximoCuidado}"
+                        th:text="${s.proximoCuidado.titulo} + ' · ' + ${#temporals.format(s.proximoCuidado.dataPrevista, 'dd/MM/yyyy')}">Cuidado</dd>
+                    <dd th:unless="${s.proximoCuidado}" class="text-muted">Nenhum agendado</dd>
+                    <dt>Última triagem</dt>
+                    <dd th:if="${s.ultimaTriagem}">
+                        <span th:replace="~{fragments/componentes :: urgencia(${s.ultimaTriagem.nivelUrgencia})}"></span>
+                        <span th:text="${s.ultimaTriagem.statusTriagem.rotulo} + ' · ' + ${#temporals.format(s.ultimaTriagem.criadaEm, 'dd/MM')}">Status</span>
+                    </dd>
+                    <dd th:unless="${s.ultimaTriagem}" class="text-muted">Nenhuma triagem registrada</dd>
+                </dl>
+                <span class="ver-mais">Ver linha do tempo <i class="bi bi-arrow-right"></i></span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card card-zelo p-3 h-100">
+                <div class="cabecalho-cartao mb-2">
+                    <h2 class="h6"><span class="icone-tom" aria-hidden="true"><i class="bi bi-calendar-heart"></i></span>
+                        <span>Próximos cuidados</span></h2>
+                    <a th:href="@{/tutor/alertas}" class="btn btn-sm btn-outline-secondary">Plano completo</a>
+                </div>
+                <th:block th:if="${#lists.isEmpty(painel.proximosCuidados)}">
+                    <div th:replace="~{fragments/componentes :: vazio('bi-calendar-check', 'Nenhum cuidado pendente. Tudo em dia!')}"></div>
+                </th:block>
+                <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(painel.proximosCuidados)}">
+                    <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2"
+                        th:each="a : ${painel.proximosCuidados}">
+                        <div class="me-auto">
+                            <strong th:text="${a.titulo}">Título</strong>
+                            <span th:replace="~{fragments/componentes :: statusAlerta(${a})}"></span>
+                            <div class="small text-muted"
+                                 th:text="${a.pet.nome} + ' · ' + ${a.tipoAlerta.rotulo} + ' · ' + ${#temporals.format(a.dataPrevista, 'dd/MM/yyyy')}">Detalhe</div>
+                        </div>
+                        <form th:replace="~{fragments/componentes :: acao('/tutor/alertas/' + ${a.id} + '/confirmar', 'Feito', 'btn-zelo', 'bi-check2', null)}"></form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div th:replace="~{fragments/componentes :: grafico('urgencia', 'doughnut', 'Urgência das suas triagens',
+                 'Classificação das triagens dos últimos 90 dias.', ${painel.graficos['urgencia']})}"></div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div th:replace="~{fragments/componentes :: grafico('cuidados', 'bar-empilhado', 'Plano de cuidado por tipo',
+                 'Todos os cuidados dos seus pets, por status.', ${painel.graficos['cuidados']})}"></div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card card-zelo p-3 h-100">
+                <div class="cabecalho-cartao mb-2">
+                    <h2 class="h6"><span class="icone-tom tom-atencao" aria-hidden="true"><i class="bi bi-clipboard2-pulse"></i></span>
+                        <span>Triagens recentes</span></h2>
+                    <a th:href="@{/tutor/triagens}" class="btn btn-sm btn-outline-secondary">Histórico</a>
+                </div>
+                <th:block th:if="${#lists.isEmpty(painel.triagensRecentes)}">
+                    <div th:replace="~{fragments/componentes :: vazio('bi-clipboard2', 'Nenhuma triagem registrada ainda.')}"></div>
+                </th:block>
+                <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(painel.triagensRecentes)}">
+                    <li class="list-group-item" th:each="t : ${painel.triagensRecentes}">
+                        <div class="d-flex justify-content-between gap-2">
+                            <strong th:text="${t.pet.nome}">Pet</strong>
+                            <span th:replace="~{fragments/componentes :: urgencia(${t.nivelUrgencia})}"></span>
+                        </div>
+                        <div class="small text-muted"
+                             th:text="${t.statusTriagem.rotulo} + ' · ' + ${t.clinica != null ? t.clinica.nome : '-'} + ' · ' + ${#temporals.format(t.criadaEm, 'dd/MM/yyyy')}">Detalhe</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block layout:fragment="scripts">
+    <script th:src="@{/webjars/chart.js/4.4.4/dist/chart.umd.js}"></script>
+    <script th:inline="javascript">window.ZELO_GRAFICOS = /*[[${painel.graficos}]]*/ {};</script>
+    <script th:src="@{/js/painel.js}"></script>
+</th:block>
+</body>
+</html>

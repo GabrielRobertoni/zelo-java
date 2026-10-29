@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title>Cadastro de tutor</title></head>
+<body>
+<main layout:fragment="conteudo" class="container pagina-media">
+    <a th:href="@{/registro}" class="link-voltar"><i class="bi bi-arrow-left"></i> Trocar perfil</a>
+    <div class="card card-zelo p-4">
+        <h1 class="h3 mb-1 d-flex align-items-center gap-3"><span class="icone-tom " aria-hidden="true"><i class="bi bi-person-heart"></i></span> Criar conta de tutor</h1>
+        <p class="text-muted mb-4">Depois do cadastro, você já pode registrar seus pets.</p>
+        <form th:action="@{/registro/tutor}" th:object="${form}" method="post" novalidate>
+            <div th:replace="~{fragments/campos :: errosGerais}"></div>
+            <th:block th:replace="~{fragments/campos :: dadosAcesso}"></th:block>
+            <div th:replace="~{fragments/campos :: entrada('telefone', 'Telefone (opcional)', 'tel', null)}"></div>
+            <div class="row">
+                <div class="col-md-8" th:insert="~{fragments/campos :: entrada('cidade', 'Cidade (opcional)', 'text', null)}"></div>
+                <div class="col-md-4" th:insert="~{fragments/campos :: entrada('estado', 'UF', 'text', 'Ex.: SP')}"></div>
+            </div>
+            <button type="submit" class="btn btn-zelo w-100">Criar conta</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

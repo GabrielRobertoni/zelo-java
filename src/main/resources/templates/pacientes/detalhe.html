@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title th:text="${pet.nome}">Paciente</title></head>
+<body>
+<main layout:fragment="conteudo" class="container">
+    <a th:href="@{/clinica/pacientes}" class="link-voltar"><i class="bi bi-arrow-left"></i> Pacientes</a>
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card card-zelo p-4">
+                <h1 class="h3 mb-1" th:text="${pet.nome}">Pet</h1>
+                <p class="text-muted" th:text="${pet.especie.rotulo} + ' · ' + ${pet.raca ?: 'Raça não informada'}">Espécie</p>
+                <dl class="ficha-pet">
+                    <dt>Idade</dt><dd th:text="${pet.idadeDescricao}">Idade</dd>
+                    <dt>Peso</dt><dd th:text="${pet.pesoKg} ? ${#numbers.formatDecimal(pet.pesoKg, 1, 'POINT', 2, 'COMMA')} + ' kg' : 'Não informado'">Peso</dd>
+                    <dt>Castrado(a)</dt><dd th:text="${pet.castrado} ? 'Sim' : 'Não'">Castrado</dd>
+                    <th:block th:each="vinculo : ${pet.tutores}">
+                        <dt th:text="${vinculo.responsavelPrincipal} ? 'Tutor responsável' : 'Tutor'">Tutor</dt>
+                        <dd>
+                            <span th:text="${vinculo.tutor.usuario.nome}">Nome</span>
+                            <span class="d-block small text-muted" th:if="${vinculo.tutor.telefone}">
+                                <i class="bi bi-telephone"></i> <span th:text="${vinculo.tutor.telefone}">Telefone</span></span>
+                        </dd>
+                    </th:block>
+                </dl>
+                <a th:href="@{'/clinica/alertas/novo?petId=' + ${pet.id}}" class="btn btn-zelo w-100">
+                    <i class="bi bi-calendar-plus"></i> Recomendar cuidado</a>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card card-zelo p-4">
+                <h2 class="h5 mb-1">Histórico na clínica</h2>
+                <p class="small text-muted mb-4">Triagens recebidas e cuidados recomendados por esta clínica.</p>
+                <ol th:replace="~{fragments/componentes :: linhaDoTempo(${eventos})}"></ol>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

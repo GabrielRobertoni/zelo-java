@@ -9,55 +9,41 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-/**
- * Tratamento centralizado de excecoes que escapam dos controllers, evitando
- * que o usuario veja uma tela de erro generica (Whitelabel) durante a
- * demonstracao. Cada controller ja trata a maioria dos casos de negocio
- * localmente (com redirect + flash message); este advice e a rede de
- * seguranca para qualquer caso nao previsto.
- */
-@ControllerAdvice
+/** Rede de segurança das telas: qualquer erro vira uma página amigável, nunca a tela genérica do servidor. */
+@ControllerAdvice(basePackages = "br.com.fiap.zelo.web.controller")
 public class GlobalExceptionHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String MENSAGEM = "mensagem";
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String recursoNaoEncontrado(RecursoNaoEncontradoException ex, Model model) {
-        model.addAttribute("mensagem", ex.getMessage());
+    public String recursoNaoEncontrado(RecursoNaoEncontradoException excecao, Model model) {
+        model.addAttribute(MENSAGEM, excecao.getMessage());
+        return "error/404";
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String enderecoInvalido(Model model) {
+        model.addAttribute(MENSAGEM, "O endereço acessado não existe.");
         return "error/404";
     }
 
     @ExceptionHandler(RegraNegocioException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String regraNegocio(RegraNegocioException ex, Model model) {
-        model.addAttribute("mensagem", ex.getMessage());
+    public String regraNegocio(RegraNegocioException excecao, Model model) {
+        model.addAttribute(MENSAGEM, excecao.getMessage());
         return "error/400";
-    }
-
-    /**
-     * Recurso estatico inexistente (ex.: o navegador pedindo /favicon.ico
-     * automaticamente, sem que a aplicacao tenha um arquivo com esse nome).
-     * Isso e um 404 comum e esperado - NAO um erro da aplicacao - entao e
-     * tratado separadamente do catch-all abaixo para nao poluir o console
-     * com stack traces em nivel ERROR a cada requisicao de favicon durante
-     * a demonstracao. Registrado apenas em DEBUG.
-     */
-    @ExceptionHandler(NoResourceFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String recursoEstaticoNaoEncontrado(NoResourceFoundException ex, Model model) {
-        log.debug("Recurso estatico nao encontrado: {}", ex.getResourcePath());
-        model.addAttribute("mensagem", "Recurso nao encontrado.");
-        return "error/404";
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public String erroInesperado(Exception ex, Model model) {
-        log.error("Erro inesperado", ex);
-        model.addAttribute("mensagem", "Ocorreu um erro inesperado. Tente novamente em instantes.");
+    public String erroInesperado(Exception excecao, Model model) {
+        LOG.error("Erro inesperado ao processar a requisição", excecao);
+        model.addAttribute(MENSAGEM, "Ocorreu um erro inesperado. Tente novamente em instantes.");
         return "error/500";
     }
 }

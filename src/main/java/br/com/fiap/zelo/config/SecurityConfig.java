@@ -1,45 +1,42 @@
 package br.com.fiap.zelo.config;
 
+import br.com.fiap.zelo.security.JwtParaUsuarioConverter;
 import br.com.fiap.zelo.security.RedirecionadorPorPerfilSuccessHandler;
-import br.com.fiap.zelo.security.ZeloUserDetailsService;
+import br.com.fiap.zelo.security.RespostaSegurancaApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.authentication.AuthenticationManager;
-import br.com.fiap.zelo.security.ApiBearerTokenFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 /**
- * Autenticacao e autorizacao por perfil (requisito de Java Advanced -
- * Sprint 3, 30 pontos): dois ou mais tipos de usuario com permissoes
- * diferentes e protecao de rotas conforme o perfil.
- *
- * Perfis (ver {@link br.com.fiap.zelo.domain.enums.TipoUsuario}):
- *  - TUTOR: area /tutor/**
- *  - VETERINARIO e GESTOR: area /clinica/**
- *  - GESTOR (exclusivo): administracao do cadastro da clinica em /clinica/gerenciar/**
- *
- * Tambem protege a API REST usada pelo aplicativo mobile (ver pacote
- * br.com.fiap.zelo.web.api): as rotas "/api/**" exigem um token Bearer,
- * validado pelo filtro {@link ApiBearerTokenFilter}, exceto login/registro.
+ * Duas cadeias de segurança independentes:
+ *  1. API REST do aplicativo mobile (/api/**): sem sessão, autenticada por JWT, respostas 401/403 em JSON.
+ *  2. Aplicação web: sessão com formulário de login, CSRF ativo e rotas protegidas por perfil.
  */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 public class SecurityConfig {
+
+    private static final String[] ROTAS_PUBLICAS = {
+            "/", "/login", "/registro", "/registro/**", "/css/**", "/js/**", "/webjars/**", "/favicon.svg",
+            "/actuator/health", "/error"
+    };
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -47,78 +44,66 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(ZeloUserDetailsService zeloUserDetailsService) {
-        return zeloUserDetailsService;
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuracao) throws Exception {
+        return configuracao.getAuthenticationManager();
     }
 
     @Bean
-    public DaoAuthenticationProvider authenticationProvider(UserDetailsService userDetailsService,
-                                                              PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
-        return provider;
+    @Order(1)
+    public SecurityFilterChain segurancaApi(HttpSecurity http, JwtParaUsuarioConverter conversor,
+                                           RespostaSegurancaApi respostas) throws Exception {
+        return http
+                .securityMatcher("/api/**")
+                .authorizeHttpRequests(rotas -> rotas
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
+                        .requestMatchers("/api/pets/**", "/api/triagens/**", "/api/alertas/**").hasRole("TUTOR")
+                        .anyRequest().authenticated())
+                .oauth2ResourceServer(recurso -> recurso
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(conversor))
+                        .authenticationEntryPoint(respostas)
+                        .accessDeniedHandler(respostas))
+                .exceptionHandling(erros -> erros.authenticationEntryPoint(respostas).accessDeniedHandler(respostas))
+                .sessionManagement(sessao -> sessao.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .build();
     }
 
     @Bean
-    public AuthenticationSuccessHandler authenticationSuccessHandler() {
-        return new RedirecionadorPorPerfilSuccessHandler();
+    @Order(2)
+    public SecurityFilterChain segurancaWeb(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(rotas -> rotas
+                        .requestMatchers(ROTAS_PUBLICAS).permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/clinica/gerenciar/**").hasRole("GESTOR")
+                        .requestMatchers("/clinica/**").hasAnyRole("VETERINARIO", "GESTOR")
+                        .requestMatchers("/tutor/**").hasRole("TUTOR")
+                        .anyRequest().authenticated())
+                .formLogin(login -> login
+                        .loginPage("/login")
+                        .successHandler(new RedirecionadorPorPerfilSuccessHandler())
+                        .failureUrl("/login?erro")
+                        .permitAll())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?sair")
+                        .permitAll())
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+                .headers(cabecalhos -> cabecalhos.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+                .build();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
-
-    // Libera o header Authorization (usado pelo token da API mobile) para
-    // qualquer origem, ja que o app React Native nao roda no mesmo dominio.
+    /** O aplicativo mobile (Expo) roda em outra origem e envia o token no cabeçalho Authorization. */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(java.util.List.of("*"));
-        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "Accept"));
-        configuration.setAllowCredentials(false);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, DaoAuthenticationProvider authenticationProvider,
-                                            AuthenticationSuccessHandler successHandler, ApiBearerTokenFilter apiBearerTokenFilter) throws Exception {
-        http
-            .authenticationProvider(authenticationProvider)
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/registro", "/registro/**", "/css/**", "/js/**", "/webjars/**", "/h2-console/**", "/api/auth/login", "/api/auth/register").permitAll()
-                .requestMatchers("/api/**").authenticated()
-                .requestMatchers("/clinica/gerenciar/**").hasRole("GESTOR")
-                .requestMatchers("/clinica/**").hasAnyRole("VETERINARIO", "GESTOR")
-                .requestMatchers("/tutor/**").hasRole("TUTOR")
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .loginProcessingUrl("/login")
-                .successHandler(successHandler)
-                .failureUrl("/login?erro")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?sair")
-                .permitAll()
-            )
-            // O console do H2 (apenas perfil "dev", para inspecionar o banco durante o
-            // desenvolvimento e o video de demonstracao) roda em frame e usa POST sem
-            // token CSRF proprio; por isso essas duas excecoes ficam restritas a esse path.
-            // A API REST ("/api/**") tambem fica de fora do CSRF porque a autenticacao
-            // dela e feita por token Bearer (ApiBearerTokenFilter), nao por sessao/cookie.
-            .cors(cors -> {})
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/api/**"))
-            .addFilterBefore(apiBearerTokenFilter, UsernamePasswordAuthenticationFilter.class)
-            .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
-
-        return http.build();
+        CorsConfiguration configuracao = new CorsConfiguration();
+        configuracao.setAllowedOriginPatterns(List.of("*"));
+        configuracao.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuracao.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        configuracao.setAllowCredentials(false);
+        UrlBasedCorsConfigurationSource fonte = new UrlBasedCorsConfigurationSource();
+        fonte.registerCorsConfiguration("/api/**", configuracao);
+        return fonte;
     }
 }

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Campos de formulário reutilizáveis. Devem ser usados dentro de um <form th:object="..."> */-->
+
+<div th:fragment="errosGerais" th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger d-flex gap-2" role="alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div><p class="mb-0" th:each="erro : ${#fields.globalErrors()}" th:text="${erro}">Erro</p></div>
+</div>
+
+<div th:fragment="entrada(nome, rotulo, tipo, dica)" class="mb-3">
+    <label class="form-label" th:for="${nome}" th:text="${rotulo}">Rótulo</label>
+    <input th:type="${tipo}" th:field="*{__${nome}__}" class="form-control" th:errorclass="is-invalid"
+           th:step="${tipo == 'number'} ? '0.01'" th:attr="aria-describedby=${dica} ? ${nome} + '-dica'"/>
+    <div class="form-text" th:if="${dica}" th:id="${nome} + '-dica'" th:text="${dica}">Dica</div>
+    <div class="invalid-feedback" th:errors="*{__${nome}__}">Erro</div>
+</div>
+
+<div th:fragment="texto(nome, rotulo, linhas, dica)" class="mb-3">
+    <label class="form-label" th:for="${nome}" th:text="${rotulo}">Rótulo</label>
+    <textarea th:field="*{__${nome}__}" th:rows="${linhas}" class="form-control" th:errorclass="is-invalid"
+              th:placeholder="${dica}"></textarea>
+    <div class="invalid-feedback" th:errors="*{__${nome}__}">Erro</div>
+</div>
+
+<div th:fragment="selecaoEnum(nome, rotulo, opcoes, vazio)" class="mb-3">
+    <label class="form-label" th:for="${nome}" th:text="${rotulo}">Rótulo</label>
+    <select th:field="*{__${nome}__}" class="form-select" th:errorclass="is-invalid">
+        <option th:if="${vazio}" value="" th:text="${vazio}">Selecione</option>
+        <option th:each="opcao : ${opcoes}" th:value="${opcao.name()}" th:text="${opcao.rotulo}">Opção</option>
+    </select>
+    <div class="invalid-feedback" th:errors="*{__${nome}__}">Erro</div>
+</div>
+
+<div th:fragment="selecaoEntidade(nome, rotulo, opcoes, vazio)" class="mb-3">
+    <label class="form-label" th:for="${nome}" th:text="${rotulo}">Rótulo</label>
+    <select th:field="*{__${nome}__}" class="form-select" th:errorclass="is-invalid">
+        <option value="" th:text="${vazio}">Selecione</option>
+        <option th:each="opcao : ${opcoes}" th:value="${opcao.id}" th:text="${opcao.nome}">Opção</option>
+    </select>
+    <div class="invalid-feedback" th:errors="*{__${nome}__}">Erro</div>
+</div>
+
+<div th:fragment="marcador(nome, rotulo)" class="form-check form-switch mb-3">
+    <input type="checkbox" th:field="*{__${nome}__}" class="form-check-input" role="switch"/>
+    <label class="form-check-label" th:for="${nome} + '1'" th:text="${rotulo}">Rótulo</label>
+</div>
+
+<th:block th:fragment="dadosAcesso">
+    <div th:replace="~{fragments/campos :: entrada('nome', 'Nome completo', 'text', null)}"></div>
+    <div th:replace="~{fragments/campos :: entrada('email', 'E-mail', 'email', 'Será o seu login no Zelo.')}"></div>
+    <div class="row">
+        <div class="col-md-6" th:insert="~{fragments/campos :: entrada('senha', 'Senha', 'password', 'Mínimo de 6 caracteres.')}"></div>
+        <div class="col-md-6" th:insert="~{fragments/campos :: entrada('confirmarSenha', 'Confirmar senha', 'password', null)}"></div>
+    </div>
+</th:block>
+
+<!--/* Campos da clínica. O prefixo permite reutilizar no cadastro do gestor ("clinica.") e na edição (""). */-->
+<th:block th:fragment="dadosClinica(prefixo)">
+    <div th:replace="~{fragments/campos :: entrada(${prefixo} + 'nome', 'Nome da clínica', 'text', null)}"></div>
+    <div class="row">
+        <div class="col-md-6" th:insert="~{fragments/campos :: entrada(${prefixo} + 'cnpj', 'CNPJ (opcional)', 'text', 'Somente os 14 números.')}"></div>
+        <div class="col-md-6" th:insert="~{fragments/campos :: entrada(${prefixo} + 'telefone', 'Telefone', 'tel', null)}"></div>
+    </div>
+    <div th:replace="~{fragments/campos :: entrada(${prefixo} + 'endereco', 'Endereço', 'text', null)}"></div>
+    <div class="row">
+        <div class="col-md-8" th:insert="~{fragments/campos :: entrada(${prefixo} + 'cidade', 'Cidade', 'text', null)}"></div>
+        <div class="col-md-4" th:insert="~{fragments/campos :: entrada(${prefixo} + 'estado', 'UF', 'text', 'Ex.: SP')}"></div>
+    </div>
+</th:block>
+</body>
+</html>

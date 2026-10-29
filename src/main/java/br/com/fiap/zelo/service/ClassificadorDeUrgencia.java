@@ -9,16 +9,10 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Regra de negocio (deterministica, sem uso de IA) que classifica a
- * urgencia de um relato de triagem a partir de palavras-chave.
- *
- * Importante: isto NAO e o motor de inteligencia artificial do Zelo - essa
- * responsabilidade pertence a disciplina de Disruptive Architectures (IoT,
- * IoB & Generative IA), em outra sprint. Aqui a exigencia e apenas ter um
- * fluxo de negocio real e testavel (nao simulado) dentro de Java Advanced;
- * por isso a classificacao usa uma heuristica simples e auditavel baseada
- * em palavras-chave do relato, com limites de pontuacao alinhados ao
- * dominio nivel_urgencia definido pela modelagem do banco.
+ * Classifica a urgência de um relato por palavras-chave (regra determinística e
+ * auditável). O motor de IA do Zelo pertence à disciplina de Disruptive
+ * Architectures; esta regra é a linha de base usada pela aplicação Java.
+ * A palavra mais grave define o nível; cada palavra adicional soma pontos ao score.
  */
 @Component
 public class ClassificadorDeUrgencia {
@@ -26,7 +20,8 @@ public class ClassificadorDeUrgencia {
     private static final List<String> PALAVRAS_EMERGENCIA = List.of(
             "sangramento", "sangrando", "sangue", "convulsao", "desmaiou", "desmaio",
             "atropelado", "atropelou", "envenenado", "envenenamento", "intoxicado", "intoxicacao",
-            "nao consegue respirar", "parou de respirar", "engasgado", "engasgou"
+            "nao consegue respirar", "parou de respirar", "engasgado", "engasgou",
+            "atropelada", "envenenada", "intoxicada", "engasgada", "convulsionando"
     );
 
     private static final List<String> PALAVRAS_ALTA = List.of(
@@ -36,7 +31,8 @@ public class ClassificadorDeUrgencia {
 
     private static final List<String> PALAVRAS_MEDIA = List.of(
             "nao come", "sem apetite", "apatico", "apatia", "tosse", "espirro",
-            "cocando muito", "diarreia", "mancando"
+            "cocando muito", "diarreia", "mancando",
+            "apatica", "tossindo", "espirrando"
     );
 
     private static final BigDecimal SCORE_BASE_EMERGENCIA = new BigDecimal("90");
@@ -48,7 +44,7 @@ public class ClassificadorDeUrgencia {
 
     public ClassificacaoUrgencia classificar(String relato) {
         if (relato == null || relato.isBlank()) {
-            throw new IllegalArgumentException("O relato da triagem nao pode ser vazio.");
+            throw new IllegalArgumentException("O relato da triagem não pode ser vazio.");
         }
 
         String normalizado = normalizar(relato);

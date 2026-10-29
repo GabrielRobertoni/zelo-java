@@ -3,6 +3,7 @@ package br.com.fiap.zelo.domain;
 import br.com.fiap.zelo.domain.enums.CanalTriagem;
 import br.com.fiap.zelo.domain.enums.NivelUrgencia;
 import br.com.fiap.zelo.domain.enums.StatusTriagem;
+import br.com.fiap.zelo.exception.RegraNegocioException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,12 +14,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Corresponde a tabela T_CH_TRIAGEM (schema real do time de Banco de Dados):
- * registro do pre-atendimento do fluxo "Triagem e Encaminhamento". E a
- * tabela referenciada pela trigger de auditoria da disciplina de Banco de
- * Dados (T_CH_AUDITORIA_DML).
- */
+/** Pré-atendimento do fluxo "Triagem e Encaminhamento" (tabela T_CH_TRIAGEM). */
 @Entity
 @Table(name = "T_CH_TRIAGEM")
 @Getter
@@ -71,4 +67,60 @@ public class Triagem {
 
     @Column(name = "dt_criacao", updatable = false, insertable = false)
     private LocalDateTime criadaEm;
+
+    public static Triagem abrir(Pet pet, Tutor tutor, Clinica clinica, CanalTriagem canal, String relato,
+                                BigDecimal scoreRisco, NivelUrgencia nivelUrgencia) {
+        return Triagem.builder()
+                .pet(pet)
+                .tutor(tutor)
+                .clinica(clinica)
+                .canal(canal)
+                .relato(relato)
+                .scoreRisco(scoreRisco)
+                .nivelUrgencia(nivelUrgencia)
+                .statusTriagem(StatusTriagem.ABERTA)
+                .build();
+    }
+
+    public void encaminhar() {
+        exigirStatus(StatusTriagem.ABERTA, "encaminhar");
+        statusTriagem = StatusTriagem.ENCAMINHADA;
+        encaminhadaEm = LocalDateTime.now();
+    }
+
+    public void concluir() {
+        exigirEmAndamento("Somente triagens abertas ou encaminhadas podem ser atendidas.");
+        statusTriagem = StatusTriagem.ATENDIDA;
+    }
+
+    public void cancelar() {
+        exigirEmAndamento("Não é possível cancelar uma triagem já finalizada.");
+        statusTriagem = StatusTriagem.CANCELADA;
+    }
+
+    public void cancelarPeloTutor() {
+        exigirStatus(StatusTriagem.ABERTA, "cancelar");
+        statusTriagem = StatusTriagem.CANCELADA;
+    }
+
+    public boolean pertenceAClinica(Long clinicaId) {
+        return clinica != null && clinica.getId().equals(clinicaId);
+    }
+
+    public boolean pertenceAoTutor(Long tutorId) {
+        return tutor != null && tutor.getId().equals(tutorId);
+    }
+
+    private void exigirStatus(StatusTriagem esperado, String acao) {
+        if (statusTriagem != esperado) {
+            throw new RegraNegocioException(
+                    "Não é possível " + acao + " uma triagem com status " + statusTriagem.getRotulo().toLowerCase() + ".");
+        }
+    }
+
+    private void exigirEmAndamento(String mensagem) {
+        if (!statusTriagem.isEmAndamento()) {
+            throw new RegraNegocioException(mensagem);
+        }
+    }
 }

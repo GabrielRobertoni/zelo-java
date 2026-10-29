@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title th:text="${pet.nome}">Pet</title></head>
+<body>
+<main layout:fragment="conteudo" class="container">
+    <a th:href="@{/tutor/pets}" class="link-voltar"><i class="bi bi-arrow-left"></i> Meus pets</a>
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card card-zelo p-4">
+                <h1 class="h3 mb-1" th:text="${pet.nome}">Pet</h1>
+                <p class="text-muted" th:text="${pet.especie.rotulo} + ' · ' + ${pet.raca ?: 'Raça não informada'}">Espécie</p>
+                <dl class="ficha-pet">
+                    <dt>Idade</dt><dd th:text="${pet.idadeDescricao}">Idade</dd>
+                    <dt>Peso</dt><dd th:text="${pet.pesoKg} ? ${#numbers.formatDecimal(pet.pesoKg, 1, 'POINT', 2, 'COMMA')} + ' kg' : 'Não informado'">Peso</dd>
+                    <dt>Sexo</dt><dd th:text="${pet.sexo} ? ${pet.sexo.rotulo} : 'Não informado'">Sexo</dd>
+                    <dt>Castrado(a)</dt><dd th:text="${pet.castrado} ? 'Sim' : 'Não'">Castrado</dd>
+                </dl>
+                <div class="d-grid gap-2">
+                    <a th:href="@{'/tutor/triagens/nova?petId=' + ${pet.id}}" class="btn btn-zelo"><i class="bi bi-clipboard2-pulse"></i> Registrar triagem</a>
+                    <a th:href="@{'/tutor/alertas/novo?petId=' + ${pet.id}}" class="btn btn-outline-primary"><i class="bi bi-calendar-plus"></i> Novo lembrete</a>
+                    <a th:href="@{'/tutor/pets/' + ${pet.id} + '/editar'}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Editar dados</a>
+                    <th:block th:if="${#lists.isEmpty(eventos)}">
+                        <form th:replace="~{fragments/componentes :: acao('/tutor/pets/' + ${pet.id} + '/excluir', 'Excluir pet', 'btn-outline-danger w-100', 'bi-trash',
+                              'Excluir este pet definitivamente?')}"></form>
+                    </th:block>
+                    <p class="small text-muted mb-0" th:unless="${#lists.isEmpty(eventos)}">
+                        <i class="bi bi-info-circle"></i> Pets com histórico não podem ser excluídos, para preservar o prontuário.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card card-zelo p-4">
+                <h2 class="h5 mb-1">Linha do tempo de cuidados</h2>
+                <p class="small text-muted mb-4">Triagens e cuidados do pet em todas as clínicas, do mais recente ao mais antigo.</p>
+                <th:block th:if="${#lists.isEmpty(eventos)}">
+                    <div th:replace="~{fragments/componentes :: vazio('bi-clock-history', 'Ainda não há triagens nem cuidados registrados.')}"></div>
+                </th:block>
+                <ol th:replace="~{fragments/componentes :: linhaDoTempo(${eventos})}"></ol>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

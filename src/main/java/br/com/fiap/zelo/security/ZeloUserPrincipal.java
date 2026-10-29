@@ -8,11 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Adaptador entre a entidade {@link Usuario} (modelo de dominio, persistida
- * conforme a modelagem do time de Banco de Dados) e o contrato
- * {@link UserDetails} exigido pelo Spring Security.
- */
+/** Adapta a entidade {@link Usuario} ao contrato {@link UserDetails} do Spring Security. */
 public class ZeloUserPrincipal implements UserDetails {
 
     private final Usuario usuario;

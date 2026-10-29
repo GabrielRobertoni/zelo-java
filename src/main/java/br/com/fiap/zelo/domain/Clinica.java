@@ -12,11 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Corresponde a tabela T_CH_CLINICA (schema real do time de Banco de Dados).
- * A tabela auxiliar T_CH_CLINICA_EQUIPE (nao prevista no DDL entregue pelo
- * time de Banco de Dados - zelo_criar.sql - adicionada aqui para viabilizar
- * o Spring Security) vincula usuarios VETERINARIO/GESTOR a uma clinica - ver
- * README, secao "Decisoes assumidas".
+ * Clínica veterinária (T_CH_CLINICA). A equipe (VETERINARIO/GESTOR) fica em
+ * T_CH_CLINICA_EQUIPE, tabela própria da aplicação Java.
  */
 @Entity
 @Table(name = "T_CH_CLINICA")
@@ -54,6 +51,9 @@ public class Clinica {
     @Builder.Default
     private String ativa = "S";
 
+    @Column(name = "cd_convite", unique = true, length = 12)
+    private String codigoConvite;
+
     @Column(name = "dt_criacao", updatable = false, insertable = false)
     private LocalDateTime criadaEm;
 
@@ -68,5 +68,20 @@ public class Clinica {
 
     public boolean isAtiva() {
         return "S".equalsIgnoreCase(ativa);
+    }
+
+    public void alternarDisponibilidade() {
+        ativa = isAtiva() ? "N" : "S";
+    }
+
+    public void adicionarMembro(Usuario usuario) {
+        equipe.add(usuario);
+    }
+
+    public String getLocalizacao() {
+        if (cidade == null || cidade.isBlank()) {
+            return estado == null ? "" : estado;
+        }
+        return estado == null || estado.isBlank() ? cidade : cidade + "/" + estado;
     }
 }

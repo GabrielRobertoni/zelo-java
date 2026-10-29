@@ -1,9 +1,9 @@
 -- =============================================================================
--- Projeto Zelo - Java Advanced (Sprint 3)
+-- Projeto Zelo - Java Advanced (Sprint 3, ajustada na Sprint 4)
 -- Migration V2 (perfil "oracle"): massa de dados minima para permitir login
--- e demonstracao dos fluxos contra a instancia Oracle real, ja que o script
--- do time de Banco de Dados (zelo_criar.sql) so cria as tabelas - nao insere
--- nenhuma linha.
+-- e demonstracao dos fluxos contra a instancia Oracle real. O script do time
+-- de Banco de Dados (2TDSR_CodigoSql_Zelo.sql) tem a sua propria carga, mas
+-- com senhas ilustrativas (nao BCrypt) que nao servem para o login do Java.
 --
 -- ATENCAO - COORDENAR COM O TIME DE BANCO DE DADOS antes de rodar contra a
 -- instancia compartilhada: se o script deles (ou alguem do time) tambem
@@ -48,18 +48,27 @@ FROM T_CH_USUARIO u
 WHERE u.ds_email = 'tutor@zelo.com.br'
 AND NOT EXISTS (SELECT 1 FROM T_CH_TUTOR t WHERE t.id_usuario = u.id_usuario);
 
+-- O script do time de Banco de Dados tambem cadastra um pet chamado Mia (de outro tutor).
+-- Por isso cada pet de demonstracao e localizado pelo nome E pelo tutor dono, nunca so pelo
+-- nome: os dados do Java e os do time de BD convivem sem se misturar.
 INSERT INTO T_CH_PET (nm_pet, tp_especie, nm_raca, tp_sexo, dt_nascimento, vl_peso_kg, fl_castrado)
 SELECT 'Rex', 'CAO', 'Labrador', 'M', DATE '2021-03-10', 28.50, 'S' FROM dual
-WHERE NOT EXISTS (SELECT 1 FROM T_CH_PET WHERE nm_pet = 'Rex');
-
-INSERT INTO T_CH_PET (nm_pet, tp_especie, nm_raca, tp_sexo, dt_nascimento, vl_peso_kg, fl_castrado)
-SELECT 'Mia', 'GATO', 'SRD', 'F', DATE '2022-07-22', 4.20, 'N' FROM dual
-WHERE NOT EXISTS (SELECT 1 FROM T_CH_PET WHERE nm_pet = 'Mia');
+WHERE NOT EXISTS (SELECT 1 FROM T_CH_PET p2 JOIN T_CH_PET_TUTOR pt2 ON pt2.id_pet = p2.id_pet JOIN T_CH_TUTOR t2 ON t2.id_tutor = pt2.id_tutor JOIN T_CH_USUARIO u2 ON u2.id_usuario = t2.id_usuario WHERE p2.nm_pet = 'Rex' AND u2.ds_email = 'tutor@zelo.com.br');
 
 INSERT INTO T_CH_PET_TUTOR (id_pet, id_tutor, fl_principal, dt_vinculo)
 SELECT p.id_pet, t.id_tutor, 'S', SYSDATE
 FROM T_CH_PET p, T_CH_TUTOR t, T_CH_USUARIO u
-WHERE p.nm_pet IN ('Rex', 'Mia') AND t.id_usuario = u.id_usuario AND u.ds_email = 'tutor@zelo.com.br'
-AND NOT EXISTS (
-    SELECT 1 FROM T_CH_PET_TUTOR pt WHERE pt.id_pet = p.id_pet AND pt.id_tutor = t.id_tutor
-);
+WHERE p.id_pet = (SELECT MAX(p3.id_pet) FROM T_CH_PET p3 WHERE p3.nm_pet = 'Rex' AND NOT EXISTS (SELECT 1 FROM T_CH_PET_TUTOR y WHERE y.id_pet = p3.id_pet))
+AND t.id_usuario = u.id_usuario AND u.ds_email = 'tutor@zelo.com.br'
+AND NOT EXISTS (SELECT 1 FROM T_CH_PET p2 JOIN T_CH_PET_TUTOR pt2 ON pt2.id_pet = p2.id_pet JOIN T_CH_TUTOR t2 ON t2.id_tutor = pt2.id_tutor JOIN T_CH_USUARIO u2 ON u2.id_usuario = t2.id_usuario WHERE p2.nm_pet = 'Rex' AND u2.ds_email = 'tutor@zelo.com.br');
+
+INSERT INTO T_CH_PET (nm_pet, tp_especie, nm_raca, tp_sexo, dt_nascimento, vl_peso_kg, fl_castrado)
+SELECT 'Mia', 'GATO', 'SRD', 'F', DATE '2022-07-22', 4.20, 'N' FROM dual
+WHERE NOT EXISTS (SELECT 1 FROM T_CH_PET p2 JOIN T_CH_PET_TUTOR pt2 ON pt2.id_pet = p2.id_pet JOIN T_CH_TUTOR t2 ON t2.id_tutor = pt2.id_tutor JOIN T_CH_USUARIO u2 ON u2.id_usuario = t2.id_usuario WHERE p2.nm_pet = 'Mia' AND u2.ds_email = 'tutor@zelo.com.br');
+
+INSERT INTO T_CH_PET_TUTOR (id_pet, id_tutor, fl_principal, dt_vinculo)
+SELECT p.id_pet, t.id_tutor, 'S', SYSDATE
+FROM T_CH_PET p, T_CH_TUTOR t, T_CH_USUARIO u
+WHERE p.id_pet = (SELECT MAX(p3.id_pet) FROM T_CH_PET p3 WHERE p3.nm_pet = 'Mia' AND NOT EXISTS (SELECT 1 FROM T_CH_PET_TUTOR y WHERE y.id_pet = p3.id_pet))
+AND t.id_usuario = u.id_usuario AND u.ds_email = 'tutor@zelo.com.br'
+AND NOT EXISTS (SELECT 1 FROM T_CH_PET p2 JOIN T_CH_PET_TUTOR pt2 ON pt2.id_pet = p2.id_pet JOIN T_CH_TUTOR t2 ON t2.id_tutor = pt2.id_tutor JOIN T_CH_USUARIO u2 ON u2.id_usuario = t2.id_usuario WHERE p2.nm_pet = 'Mia' AND u2.ds_email = 'tutor@zelo.com.br');

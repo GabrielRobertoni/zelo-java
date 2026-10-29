@@ -14,13 +14,13 @@ public class TriagemForm {
     @NotNull(message = "Selecione o pet.")
     private Long petId;
 
-    @NotNull(message = "Selecione a clinica de destino.")
+    @NotNull(message = "Selecione a clínica de destino.")
     private Long clinicaId;
 
     @NotNull(message = "Selecione o canal do relato.")
-    private CanalTriagem canal;
+    private CanalTriagem canal = CanalTriagem.TEXTO;
 
-    @NotBlank(message = "Descreva o que esta acontecendo com o pet.")
+    @NotBlank(message = "Descreva o que está acontecendo com o pet.")
     @Size(min = 10, max = 2000, message = "O relato deve ter entre 10 e 2000 caracteres.")
     private String relato;
 }

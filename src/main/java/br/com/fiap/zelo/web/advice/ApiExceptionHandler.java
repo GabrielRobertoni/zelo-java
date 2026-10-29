@@ -2,58 +2,70 @@ package br.com.fiap.zelo.web.advice;
 
 import br.com.fiap.zelo.exception.RecursoNaoEncontradoException;
 import br.com.fiap.zelo.exception.RegraNegocioException;
-import br.com.fiap.zelo.web.api.ApiModels;
+import br.com.fiap.zelo.web.api.ApiModels.ApiErrorResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@RestControllerAdvice(basePackageClasses = br.com.fiap.zelo.web.api.ApiAuthController.class)
+/** Erros da API REST sempre em JSON, com o status HTTP correspondente. */
+@RestControllerAdvice(basePackages = "br.com.fiap.zelo.web.api")
 public class ApiExceptionHandler {
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public org.springframework.http.ResponseEntity<ApiModels.ApiErrorResponse> validation(MethodArgumentNotValidException exception) {
-        Map<String, String> errors = new LinkedHashMap<>();
-        exception.getBindingResult().getFieldErrors().forEach(error -> errors.putIfAbsent(error.getField(), error.getDefaultMessage()));
-        return response(HttpStatus.BAD_REQUEST, "Revise os campos destacados e tente novamente.", errors);
+
+    private static final Logger LOG = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ApiErrorResponse> validacao(BindException excecao) {
+        Map<String, String> erros = new LinkedHashMap<>();
+        excecao.getBindingResult().getFieldErrors()
+                .forEach(erro -> erros.putIfAbsent(erro.getField(), erro.getDefaultMessage()));
+        excecao.getBindingResult().getGlobalErrors()
+                .forEach(erro -> erros.putIfAbsent(erro.getObjectName(), erro.getDefaultMessage()));
+        return responder(HttpStatus.BAD_REQUEST, "Revise os campos destacados e tente novamente.", erros);
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public org.springframework.http.ResponseEntity<ApiModels.ApiErrorResponse> invalidJson(HttpMessageNotReadableException exception) {
-        return response(HttpStatus.BAD_REQUEST, "Os dados enviados estão inválidos. Confira os campos e tente novamente.", Map.of());
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<ApiErrorResponse> requisicaoInvalida() {
+        return responder(HttpStatus.BAD_REQUEST, "Os dados enviados estão em formato inválido.", Map.of());
     }
 
-    @ExceptionHandler(ResponseStatusException.class)
-    public org.springframework.http.ResponseEntity<ApiModels.ApiErrorResponse> status(ResponseStatusException exception) {
-        return response(HttpStatus.valueOf(exception.getStatusCode().value()), exception.getReason() == null ? "Não foi possível concluir a solicitação." : exception.getReason(), Map.of());
-    }
-
-    @ExceptionHandler(BadCredentialsException.class)
-    public org.springframework.http.ResponseEntity<ApiModels.ApiErrorResponse> credentials(BadCredentialsException exception) {
-        return response(HttpStatus.UNAUTHORIZED, "E-mail ou senha inválidos.", Map.of());
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiErrorResponse> credenciais() {
+        return responder(HttpStatus.UNAUTHORIZED, "E-mail ou senha inválidos, ou acesso desativado.", Map.of());
     }
 
     @ExceptionHandler(RegraNegocioException.class)
-    public org.springframework.http.ResponseEntity<ApiModels.ApiErrorResponse> business(RegraNegocioException exception) {
-        return response(HttpStatus.BAD_REQUEST, exception.getMessage(), Map.of());
+    public ResponseEntity<ApiErrorResponse> regraNegocio(RegraNegocioException excecao) {
+        return responder(HttpStatus.UNPROCESSABLE_ENTITY, excecao.getMessage(), Map.of());
     }
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
-    public org.springframework.http.ResponseEntity<ApiModels.ApiErrorResponse> notFound(RecursoNaoEncontradoException exception) {
-        return response(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());
+    public ResponseEntity<ApiErrorResponse> naoEncontrado(RecursoNaoEncontradoException excecao) {
+        return responder(HttpStatus.NOT_FOUND, excecao.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse> conflito() {
+        return responder(HttpStatus.CONFLICT, "A operação conflita com dados já existentes.", Map.of());
     }
 
     @ExceptionHandler(Exception.class)
-    public org.springframework.http.ResponseEntity<ApiModels.ApiErrorResponse> unexpected(Exception exception) {
-        return response(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível concluir o cadastro agora. Tente novamente em instantes.", Map.of());
+    public ResponseEntity<ApiErrorResponse> inesperado(Exception excecao) {
+        LOG.error("Erro inesperado na API", excecao);
+        return responder(HttpStatus.INTERNAL_SERVER_ERROR, "Não foi possível concluir a solicitação agora.", Map.of());
     }
 
-    private org.springframework.http.ResponseEntity<ApiModels.ApiErrorResponse> response(HttpStatus status, String message, Map<String, String> errors) {
-        return org.springframework.http.ResponseEntity.status(status).body(new ApiModels.ApiErrorResponse(message, status.value(), errors));
+    private ResponseEntity<ApiErrorResponse> responder(HttpStatus status, String mensagem, Map<String, String> erros) {
+        return ResponseEntity.status(status).body(new ApiErrorResponse(mensagem, status.value(), erros));
     }
 }

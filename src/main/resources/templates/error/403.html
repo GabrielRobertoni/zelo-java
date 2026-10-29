@@ -1,14 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Acesso negado')}"></head>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title>Acesso restrito ao seu perfil</title></head>
 <body>
-<div th:replace="~{fragments/nav :: nav}"></div>
-<main class="container error-page text-center py-5">
-    <div class="feature-icon mx-auto"><i class="bi bi-shield-lock"></i></div>
-    <h1 class="display-4">403</h1>
-    <p class="lead">Seu perfil nao tem permissao para acessar esta pagina.</p>
-    <a th:href="@{/}" class="btn btn-zelo">Voltar para o inicio</a>
+<main layout:fragment="conteudo">
+    <section th:replace="~{fragments/componentes :: erro('403', 'bi-shield-lock', 'Acesso restrito ao seu perfil', 'Esta área é exclusiva de outro perfil de usuário.')}"></section>
 </main>
-<div th:replace="~{fragments/scripts :: scripts}"></div>
 </body>
 </html>

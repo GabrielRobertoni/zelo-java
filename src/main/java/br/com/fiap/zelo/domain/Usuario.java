@@ -10,12 +10,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/**
- * Corresponde a tabela T_CH_USUARIO (schema real do time de Banco de Dados,
- * arquivo zelo_criar.sql): identidade de acesso da plataforma. Um mesmo
- * usuario pode se especializar em Tutor (tabela T_CH_TUTOR) ou pertencer a
- * equipe de uma Clinica, dependendo do tipoUsuario.
- */
+/** Identidade de acesso (T_CH_USUARIO). Especializa-se em Tutor ou em membro da equipe de uma Clínica. */
 @Entity
 @Table(name = "T_CH_USUARIO")
 @Getter
@@ -50,7 +45,33 @@ public class Usuario {
     @Column(name = "dt_criacao", updatable = false, insertable = false)
     private LocalDateTime criadoEm;
 
+    public static Usuario novo(String nome, String email, String senhaHash, TipoUsuario tipo) {
+        return Usuario.builder()
+                .nome(nome.trim())
+                .email(email.trim().toLowerCase())
+                .senhaHash(senhaHash)
+                .tipoUsuario(tipo)
+                .build();
+    }
+
+    /** Iniciais do primeiro e do último nome, usadas no avatar do menu (ex.: "Ana Gestora" -> "AG"). */
+    public String getIniciais() {
+        String[] partes = nome == null ? new String[0] : nome.trim().split("\\s+");
+        if (partes.length == 0 || partes[0].isEmpty()) {
+            return "?";
+        }
+        String iniciais = partes[0].substring(0, 1);
+        if (partes.length > 1) {
+            iniciais += partes[partes.length - 1].substring(0, 1);
+        }
+        return iniciais.toUpperCase();
+    }
+
     public boolean isAtivo() {
         return "S".equalsIgnoreCase(ativo);
+    }
+
+    public void alternarAtivo() {
+        ativo = isAtivo() ? "N" : "S";
     }
 }

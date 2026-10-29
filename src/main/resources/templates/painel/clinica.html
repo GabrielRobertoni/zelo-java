@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head><title>Painel da clínica</title></head>
+<body>
+<main layout:fragment="conteudo" class="container" th:with="clinica=${painel.clinica}">
+    <section class="painel-cabecalho">
+        <div>
+            <span class="painel-eyebrow"><i class="bi bi-hospital"></i> Painel da clínica</span>
+            <h1 th:text="${clinica.nome}">Clínica</h1>
+            <div class="painel-meta">
+                <span><i class="bi bi-geo-alt"></i> <span th:text="${clinica.localizacao}">Cidade/UF</span></span>
+                <span class="chip-claro" th:classappend="${clinica.ativa} ? '' : 'inativo'"><span class="ponto"></span>
+                    <span th:text="${clinica.ativa} ? 'Recebendo triagens' : 'Indisponível'">Status</span></span>
+                <span sec:authorize="hasRole('GESTOR')"><i class="bi bi-people"></i>
+                    <a th:href="@{/clinica/gerenciar/equipe}" th:text="${painel.tamanhoEquipe} + ' na equipe'">equipe</a></span>
+            </div>
+        </div>
+        <form method="get" th:action="@{/clinica/painel}" class="painel-periodo" aria-label="Período de análise">
+            <label for="periodo" class="small text-nowrap"><i class="bi bi-calendar3"></i> Período</label>
+            <select id="periodo" name="periodo" class="form-select form-select-sm" data-enviar-ao-mudar>
+                <option th:each="p : ${periodos}" th:value="${p.dias}" th:text="${p.rotulo}"
+                        th:selected="${p == painel.periodo}">Período</option>
+            </select>
+            <noscript><button type="submit" class="btn btn-sm btn-light">Aplicar</button></noscript>
+        </form>
+    </section>
+
+    <div th:replace="~{fragments/componentes :: indicadores(${painel.indicadores})}"></div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div th:replace="~{fragments/componentes :: grafico('evolucao', 'bar-agrupado', 'Triagens por dia',
+                 'Volume diário e quantos casos chegaram com urgência alta ou emergência.', ${painel.graficos['evolucao']})}"></div>
+        </div>
+        <div class="col-lg-4">
+            <div th:replace="~{fragments/componentes :: grafico('urgencia', 'doughnut', 'Urgência das triagens',
+                 'Distribuição pela classificação automática.', ${painel.graficos['urgencia']})}"></div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card card-zelo p-3 h-100">
+                <div class="cabecalho-cartao mb-2">
+                    <h2 class="h6"><span class="icone-tom tom-critico" aria-hidden="true"><i class="bi bi-list-check"></i></span>
+                        <span>Fila de atenção <span class="text-muted fw-normal" th:text="'(' + ${painel.totalNaFila} + ')'"></span></span></h2>
+                    <a th:href="@{/clinica/triagens}" class="btn btn-sm btn-outline-secondary">Ver fila completa</a>
+                </div>
+                <th:block th:if="${#lists.isEmpty(painel.filaPrioritaria)}">
+                    <div th:replace="~{fragments/componentes :: vazio('bi-emoji-smile', 'Nenhum caso aguardando atendimento.')}"></div>
+                </th:block>
+                <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(painel.filaPrioritaria)}">
+                    <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2"
+                        th:each="t : ${painel.filaPrioritaria}">
+                        <div class="item-fila me-auto">
+                            <span class="avatar-pet" th:classappend="'urg-' + ${t.nivelUrgencia.name()}"
+                                  th:text="${#strings.substring(t.pet.nome, 0, 1)}" aria-hidden="true">R</span>
+                            <div>
+                                <a th:href="@{'/clinica/pacientes/' + ${t.pet.id}}" class="fw-semibold" th:text="${t.pet.nome}">Pet</a>
+                                <span th:replace="~{fragments/componentes :: urgencia(${t.nivelUrgencia})}"></span>
+                                <span th:replace="~{fragments/componentes :: statusTriagem(${t.statusTriagem})}"></span>
+                                <div class="small text-muted texto-truncado" th:text="${t.relato}">Relato</div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <th:block th:if="${t.statusTriagem.name() == 'ABERTA'}">
+                                <form th:replace="~{fragments/componentes :: acao('/clinica/triagens/' + ${t.id} + '/encaminhar', 'Encaminhar', 'btn-zelo', 'bi-arrow-right-circle', null)}"></form>
+                            </th:block>
+                            <form th:replace="~{fragments/componentes :: acao('/clinica/triagens/' + ${t.id} + '/concluir', 'Concluir', 'btn-outline-success', 'bi-check2', null)}"></form>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div th:replace="~{fragments/componentes :: grafico('status', 'bar-horizontal', 'Situação das triagens do período',
+                 'Quantas estão em andamento, atendidas ou canceladas.', ${painel.graficos['status']})}"></div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div th:replace="~{fragments/componentes :: grafico('alertas', 'bar-empilhado', 'Plano de cuidado por tipo',
+                 'Alertas da clínica com data prevista no período, por status.', ${painel.graficos['alertas']})}"></div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card card-zelo p-3 h-100">
+                <div class="cabecalho-cartao mb-2">
+                    <h2 class="h6"><span class="icone-tom tom-atencao" aria-hidden="true"><i class="bi bi-alarm"></i></span>
+                        <span>Cuidados que precisam de ação</span></h2>
+                    <a th:href="@{/clinica/alertas}" class="btn btn-sm btn-outline-secondary">Ver alertas</a>
+                </div>
+                <th:block th:if="${#lists.isEmpty(painel.alertasAtrasados) and #lists.isEmpty(painel.proximosAlertas)}">
+                    <div th:replace="~{fragments/componentes :: vazio('bi-calendar-check', 'Nenhum cuidado atrasado ou próximo do vencimento.')}"></div>
+                </th:block>
+                <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(painel.alertasAtrasados) and #lists.isEmpty(painel.proximosAlertas)}">
+                    <li class="list-group-item" th:each="a : ${painel.alertasAtrasados}">
+                        <div class="d-flex justify-content-between gap-2">
+                            <span><strong th:text="${a.pet.nome}">Pet</strong> · <span th:text="${a.titulo}">Título</span></span>
+                            <span th:replace="~{fragments/componentes :: statusAlerta(${a})}"></span>
+                        </div>
+                        <div class="small text-muted" th:text="'Venceu em ' + ${#temporals.format(a.dataPrevista, 'dd/MM/yyyy')}">Data</div>
+                    </li>
+                    <li class="list-group-item" th:each="a : ${painel.proximosAlertas}">
+                        <div class="d-flex justify-content-between gap-2">
+                            <span><strong th:text="${a.pet.nome}">Pet</strong> · <span th:text="${a.titulo}">Título</span></span>
+                            <span th:replace="~{fragments/componentes :: statusAlerta(${a})}"></span>
+                        </div>
+                        <div class="small text-muted" th:text="'Previsto para ' + ${#temporals.format(a.dataPrevista, 'dd/MM/yyyy')}">Data</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-zelo p-3 mb-4">
+        <div class="cabecalho-cartao mb-1">
+            <h2 class="h6"><span class="icone-tom tom-azul" aria-hidden="true"><i class="bi bi-arrow-repeat"></i></span>
+                <span>Pacientes recorrentes no período</span></h2>
+        </div>
+        <p class="small text-muted mb-3">Pets com mais de uma triagem: candidatos a um plano de cuidado preventivo.</p>
+        <th:block th:if="${#lists.isEmpty(painel.pacientesRecorrentes)}">
+            <div th:replace="~{fragments/componentes :: vazio('bi-people', 'Nenhum paciente com triagens repetidas no período.')}"></div>
+        </th:block>
+        <div class="table-responsive" th:unless="${#lists.isEmpty(painel.pacientesRecorrentes)}">
+            <table class="table align-middle bg-white">
+                <thead><tr><th>Paciente</th><th class="d-none d-sm-table-cell">Espécie</th><th class="text-end">Triagens</th><th>Última triagem</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="p : ${painel.pacientesRecorrentes}">
+                    <td class="fw-semibold"><span class="d-inline-flex align-items-center gap-2"><span class="avatar-pet"
+                            th:text="${#strings.substring(p.petNome, 0, 1)}" aria-hidden="true">R</span><span th:text="${p.petNome}">Pet</span></span></td>
+                    <td class="d-none d-sm-table-cell" th:text="${p.especie.rotulo}">Espécie</td>
+                    <td class="text-end" th:text="${p.totalTriagens}">0</td>
+                    <td th:text="${#temporals.format(p.ultimaTriagem, 'dd/MM/yyyy')}">Data</td>
+                    <td class="text-end">
+                        <a th:href="@{'/clinica/alertas/novo?petId=' + ${p.petId}}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-calendar-plus"></i> Recomendar cuidado</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<th:block layout:fragment="scripts">
+    <script th:src="@{/webjars/chart.js/4.4.4/dist/chart.umd.js}"></script>
+    <script th:inline="javascript">window.ZELO_GRAFICOS = /*[[${painel.graficos}]]*/ {};</script>
+    <script th:src="@{/js/painel.js}"></script>
+</th:block>
+</body>
+</html>

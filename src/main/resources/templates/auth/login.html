@@ -1,45 +1,82 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Entrar')}"></head>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title>Entrar</title></head>
 <body>
-<div th:replace="~{fragments/nav :: nav}"></div>
-
-<main class="container py-5" style="max-width: 480px;">
-    <div class="text-center mb-4">
-        <span class="hero-eyebrow"><i class="bi bi-heart-pulse-fill"></i> Bem-vindo de volta</span>
-    </div>
-    <div class="card card-zelo p-4">
-        <h3 class="mb-3">Entrar</h3>
-
-        <div th:if="${param.erro}" class="alert alert-danger">E-mail ou senha invalidos.</div>
-        <div th:if="${param.sair}" class="alert alert-success">Sessao encerrada com sucesso.</div>
-        <div th:if="${param.registrado}" class="alert alert-success">Conta criada com sucesso! Entre com suas credenciais.</div>
-
-        <form th:action="@{/login}" method="post">
-        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <div class="mb-3">
-                <label class="form-label">E-mail</label>
-                <input type="email" name="username" class="form-control" required autofocus/>
+<main layout:fragment="conteudo" class="container pagina-login">
+    <div class="login-grade">
+        <section class="login-marca d-none d-lg-flex" aria-hidden="true">
+            <span class="menu-marca"><span class="marca-icone"><i class="bi bi-heart-pulse-fill"></i></span> Zelo</span>
+            <div>
+                <h2>Cuidado contínuo, antes da urgência.</h2>
+                <ul class="login-beneficios">
+                    <li><i class="bi bi-lightning-charge-fill"></i> Triagem com urgência classificada na hora</li>
+                    <li><i class="bi bi-list-check"></i> Fila da clínica priorizada por risco</li>
+                    <li><i class="bi bi-calendar-heart"></i> Plano de cuidado com vacinas e retornos</li>
+                    <li><i class="bi bi-graph-up-arrow"></i> Painéis com indicadores para a gestão</li>
+                </ul>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Senha</label>
-                <input type="password" name="password" class="form-control" required/>
+            <div class="login-cartao">
+                <span class="icone-tom tom-critico"><i class="bi bi-activity"></i></span>
+                <div>
+                    <strong>Rex · Emergência</strong><br/>
+                    <small>Triagem classificada com score 93 e enviada ao topo da fila.</small>
+                </div>
             </div>
-            <button type="submit" class="btn btn-zelo w-100">Entrar</button>
-        </form>
+        </section>
 
-        <hr/>
-        <p class="mb-1 small text-muted">Contas de demonstracao (senha <strong>Zelo@123</strong> para todas):</p>
-        <ul class="small text-muted">
-            <li>Tutor: tutor@zelo.com.br</li>
-            <li>Veterinario: veterinario@zelo.com.br</li>
-            <li>Gestor: gestor@zelo.com.br</li>
-        </ul>
-        <p class="mt-2">Ainda nao tem conta? <a th:href="@{/registro}">Cadastre-se como tutor</a>.</p>
+        <section class="login-formulario">
+            <div class="login-caixa">
+                <span class="hero-eyebrow"><i class="bi bi-heart-pulse-fill"></i> Bem-vindo de volta</span>
+                <h1>Entrar</h1>
+                <p class="text-muted mb-4">Acesse o seu painel no Zelo.</p>
+
+                <div th:if="${param.erro}" class="alert alert-danger" role="alert">E-mail ou senha inválidos, ou acesso desativado pelo gestor da clínica.</div>
+                <div th:if="${param.sair}" class="alert alert-success" role="status">Sessão encerrada com sucesso.</div>
+
+                <form th:action="@{/login}" method="post" id="form-login">
+                    <div class="mb-3">
+                        <label class="form-label" for="username">E-mail</label>
+                        <div class="campo-icone">
+                            <i class="bi bi-envelope" aria-hidden="true"></i>
+                            <input type="email" id="username" name="username" class="form-control" required autocomplete="username"
+                                   placeholder="voce@exemplo.com" th:value="${emailCadastrado}" th:autofocus="${emailCadastrado == null}"/>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label" for="password">Senha</label>
+                        <div class="campo-icone">
+                            <i class="bi bi-lock" aria-hidden="true"></i>
+                            <input type="password" id="password" name="password" class="form-control" required
+                                   placeholder="Sua senha" autocomplete="current-password" th:autofocus="${emailCadastrado != null}"/>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-zelo btn-lg w-100">Entrar <i class="bi bi-arrow-right"></i></button>
+                </form>
+
+                <div class="divisor-texto">Contas de demonstração · senha <code>Zelo@123</code></div>
+                <div class="contas-demo">
+                    <button type="button" class="conta-demo perfil-tutor" data-conta-demo="tutor@zelo.com.br">
+                        <i class="bi bi-person-heart"></i> Tutor <small>tutor@zelo.com.br</small>
+                    </button>
+                    <button type="button" class="conta-demo perfil-vet" data-conta-demo="veterinario@zelo.com.br">
+                        <i class="bi bi-clipboard2-pulse"></i> Veterinário <small>veterinario@...</small>
+                    </button>
+                    <button type="button" class="conta-demo perfil-gestor" data-conta-demo="gestor@zelo.com.br">
+                        <i class="bi bi-hospital"></i> Gestor <small>gestor@zelo.com.br</small>
+                    </button>
+                </div>
+                <p class="small text-muted text-center mt-2 mb-0">Clique em uma conta para preencher o login.</p>
+
+                <div class="criar-conta-atalhos">
+                    <span>Ainda não tem conta? Crie como</span>
+                    <a th:href="@{/registro/tutor}"><i class="bi bi-person-heart"></i> Tutor</a>
+                    <a th:href="@{/registro/veterinario}"><i class="bi bi-clipboard2-pulse"></i> Veterinário</a>
+                    <a th:href="@{/registro/gestor}"><i class="bi bi-hospital"></i> Gestor</a>
+                </div>
+            </div>
+        </section>
     </div>
 </main>
-
-<div th:replace="~{fragments/footer :: footer}"></div>
-<div th:replace="~{fragments/scripts :: scripts}"></div>
 </body>
 </html>

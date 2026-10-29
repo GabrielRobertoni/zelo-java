@@ -1,38 +1,44 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Meus pets')}"></head>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title>Meus pets</title></head>
 <body>
-<div th:replace="~{fragments/nav :: nav}"></div>
-<div th:replace="~{fragments/mensagens :: mensagens}"></div>
-
-<main class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Meus pets</h2>
-        <a th:href="@{/tutor/pets/novo}" class="btn btn-zelo">Cadastrar pet</a>
+<main layout:fragment="conteudo" class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div th:replace="~{fragments/componentes :: cabecalho('Meus pets', 'Abra um pet para ver a linha do tempo de cuidados.')}"></div>
+        <a th:href="@{/tutor/pets/novo}" class="btn btn-zelo"><i class="bi bi-plus-lg"></i> Cadastrar pet</a>
     </div>
 
-    <p class="text-muted" th:if="${#lists.isEmpty(pets)}">Voce ainda nao cadastrou nenhum pet.</p>
+    <th:block th:if="${#lists.isEmpty(pets)}">
+        <div class="card card-zelo p-4 text-center">
+            <div th:replace="~{fragments/componentes :: vazio('bi-heart', 'Você ainda não cadastrou nenhum pet.')}"></div>
+        </div>
+    </th:block>
 
     <div class="row g-3">
-        <div class="col-md-4" th:each="pet : ${pets}">
+        <div class="col-md-6 col-lg-4" th:each="pet : ${pets}">
             <div class="card card-zelo p-3 h-100">
-                <h5 th:text="${pet.nome}">Nome</h5>
-                <p class="mb-1"><strong>Especie:</strong> <span th:text="${pet.especie}"></span></p>
-                <p class="mb-1" th:if="${pet.raca}"><strong>Raca:</strong> <span th:text="${pet.raca}"></span></p>
-                <p class="mb-1" th:if="${pet.idadeAnos != null}"><strong>Idade:</strong> <span th:text="${pet.idadeAnos} + ' anos'"></span></p>
-                <div class="mt-2 d-flex gap-2">
-                    <a th:href="@{'/tutor/pets/' + ${pet.id} + '/editar'}" class="btn btn-sm btn-outline-secondary">Editar</a>
-                    <form th:action="@{'/tutor/pets/' + ${pet.id} + '/excluir'}" method="post"
-                          onsubmit="return confirm('Tem certeza que deseja remover este pet?');">
-                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
-                    </form>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h2 class="h5 mb-0"><a th:href="@{'/tutor/pets/' + ${pet.id}}" th:text="${pet.nome}">Pet</a></h2>
+                        <span class="small text-muted" th:text="${pet.especie.rotulo} + ' · ' + ${pet.raca ?: 'Raça não informada'}">Espécie</span>
+                    </div>
+                    <span class="pet-avatar" aria-hidden="true"><i class="bi"
+                          th:classappend="${pet.especie.name() == 'GATO'} ? 'bi-moon-stars' : (${pet.especie.name() == 'CAO'} ? 'bi-heart' : 'bi-flower1')"></i></span>
+                </div>
+                <ul class="list-inline small text-muted mt-2 mb-3">
+                    <li class="list-inline-item" th:text="${pet.idadeDescricao}">Idade</li>
+                    <li class="list-inline-item" th:if="${pet.pesoKg}" th:text="${#numbers.formatDecimal(pet.pesoKg, 1, 'POINT', 2, 'COMMA')} + ' kg'">Peso</li>
+                    <li class="list-inline-item" th:if="${pet.sexo}" th:text="${pet.sexo.rotulo}">Sexo</li>
+                    <li class="list-inline-item" th:text="${pet.castrado} ? 'Castrado(a)' : 'Não castrado(a)'">Castrado</li>
+                </ul>
+                <div class="d-flex flex-wrap gap-2 mt-auto">
+                    <a th:href="@{'/tutor/pets/' + ${pet.id}}" class="btn btn-sm btn-zelo"><i class="bi bi-clock-history"></i> Linha do tempo</a>
+                    <a th:href="@{'/tutor/pets/' + ${pet.id} + '/editar'}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i> Editar</a>
                 </div>
             </div>
         </div>
     </div>
 </main>
-
-<div th:replace="~{fragments/scripts :: scripts}"></div>
 </body>
 </html>

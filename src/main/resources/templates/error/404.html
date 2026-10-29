@@ -1,14 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Nao encontrado')}"></head>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title>Página não encontrada</title></head>
 <body>
-<div th:replace="~{fragments/nav :: nav}"></div>
-<main class="container error-page text-center py-5">
-    <div class="feature-icon mx-auto"><i class="bi bi-compass"></i></div>
-    <h1 class="display-4">404</h1>
-    <p class="lead" th:text="${mensagem} ?: 'Recurso nao encontrado.'">Recurso nao encontrado.</p>
-    <a th:href="@{/}" class="btn btn-zelo">Voltar para o inicio</a>
+<main layout:fragment="conteudo">
+    <section th:replace="~{fragments/componentes :: erro('404', 'bi-compass', 'Página não encontrada', 'O endereço acessado não existe ou não está disponível para você.')}"></section>
 </main>
-<div th:replace="~{fragments/scripts :: scripts}"></div>
 </body>
 </html>

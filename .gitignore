@@ -10,6 +10,7 @@ target/
 .DS_Store
 HELP.md
 
-# Credenciais reais do Oracle (ver src/main/resources/application-oracle.yml)
-# - NUNCA deve ser commitado, o repositorio e publico.
+# Configuração local com credenciais (nunca versionar)
+src/main/resources/application-local.yml
 src/main/resources/application-oracle.yml
+.env

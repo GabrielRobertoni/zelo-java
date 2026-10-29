@@ -1,0 +1,10 @@
+# Blueprint do Render (https://render.com): publica a aplicação a partir do Dockerfile.
+services:
+  - type: web
+    name: zelo-java
+    runtime: docker
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: ZELO_JWT_SECRET
+        generateValue: true

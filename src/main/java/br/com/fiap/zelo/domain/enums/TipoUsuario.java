@@ -1,21 +1,31 @@
 package br.com.fiap.zelo.domain.enums;
 
 /**
- * Perfis de acesso da plataforma Zelo.
- * Corresponde ao dominio da coluna ZELO_USUARIO.tipo_usuario (CHECK), definido
- * pela modelagem relacional entregue pelo grupo de Banco de Dados.
- *
- * Regras de autorizacao (Spring Security):
- *  - TUTOR: acessa seus proprios pets, cria triagens e confirma alertas.
- *  - VETERINARIO: acessa o painel da clinica, atende triagens e gerencia alertas dos pets atendidos.
- *  - GESTOR: tudo que o VETERINARIO pode, alem de administrar o cadastro da propria clinica.
+ * Perfis de acesso:
+ *  - TUTOR: seus pets, triagens e plano de cuidado.
+ *  - VETERINARIO: painel, fila, pacientes e alertas da clínica.
+ *  - GESTOR: tudo do veterinário, mais dados da clínica e equipe.
  */
 public enum TipoUsuario {
-    TUTOR,
-    VETERINARIO,
-    GESTOR;
+    TUTOR("Tutor"),
+    VETERINARIO("Veterinário"),
+    GESTOR("Gestor");
+
+    private final String rotulo;
+
+    TipoUsuario(String rotulo) {
+        this.rotulo = rotulo;
+    }
+
+    public String getRotulo() {
+        return rotulo;
+    }
 
     public String authority() {
         return "ROLE_" + name();
+    }
+
+    public boolean isEquipeClinica() {
+        return this == VETERINARIO || this == GESTOR;
     }
 }

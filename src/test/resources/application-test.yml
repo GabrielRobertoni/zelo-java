@@ -1,0 +1,5 @@
+# Menos ruído no console durante a suíte de testes.
+logging:
+  level:
+    root: WARN
+    br.com.fiap.zelo: INFO

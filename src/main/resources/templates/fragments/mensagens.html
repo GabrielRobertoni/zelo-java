@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="mensagens" class="container mt-2">
-    <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
+<div th:fragment="mensagens" class="container" th:if="${sucesso != null or erro != null}">
+    <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="status">
+        <i class="bi bi-check-circle-fill"></i>
         <span th:text="${sucesso}">Sucesso</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
     </div>
-    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
         <span th:text="${erro}">Erro</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
     </div>
 </div>
 </body>

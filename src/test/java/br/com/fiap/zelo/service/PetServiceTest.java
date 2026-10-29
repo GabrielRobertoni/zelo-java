@@ -3,9 +3,13 @@ package br.com.fiap.zelo.service;
 import br.com.fiap.zelo.domain.Pet;
 import br.com.fiap.zelo.domain.PetTutor;
 import br.com.fiap.zelo.domain.Tutor;
+import br.com.fiap.zelo.domain.enums.Especie;
 import br.com.fiap.zelo.exception.RecursoNaoEncontradoException;
+import br.com.fiap.zelo.exception.RegraNegocioException;
+import br.com.fiap.zelo.repository.AlertaRepository;
 import br.com.fiap.zelo.repository.PetRepository;
 import br.com.fiap.zelo.repository.PetTutorRepository;
+import br.com.fiap.zelo.repository.TriagemRepository;
 import br.com.fiap.zelo.repository.TutorRepository;
 import br.com.fiap.zelo.web.dto.PetForm;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,18 +19,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- * Cobre o cadastro/edicao de pets pelo tutor, incluindo a criacao automatica
- * do vinculo Pet-Tutor (recurso Multi-Tutor) e a checagem de posse usada
- * para impedir que um tutor acesse ou remova o pet de outro tutor.
- */
 @ExtendWith(MockitoExtension.class)
 class PetServiceTest {
 
@@ -36,67 +38,68 @@ class PetServiceTest {
     private PetTutorRepository petTutorRepository;
     @Mock
     private TutorRepository tutorRepository;
+    @Mock
+    private TriagemRepository triagemRepository;
+    @Mock
+    private AlertaRepository alertaRepository;
 
     private PetService petService;
+    private final Pet rex = Pet.builder().id(1L).nome("Rex").build();
 
     @BeforeEach
     void setUp() {
-        petService = new PetService(petRepository, petTutorRepository, tutorRepository);
+        petService = new PetService(petRepository, petTutorRepository, tutorRepository, triagemRepository, alertaRepository);
     }
 
     @Test
-    void cadastrarCriaPetEVinculoComOTutor() {
+    void cadastrarCriaPetEVinculoPrincipalComOTutor() {
         Tutor tutor = Tutor.builder().id(10L).build();
         PetForm form = new PetForm();
-        form.setNome("Rex");
-        form.setEspecie(br.com.fiap.zelo.domain.enums.Especie.CAO);
+        form.setNome("  Thor ");
+        form.setEspecie(Especie.CAO);
+        form.setRaca("");
+        form.setPesoKg(new BigDecimal("12.5"));
         form.setCastrado(true);
-
         when(tutorRepository.findById(10L)).thenReturn(Optional.of(tutor));
-        when(petRepository.save(any(Pet.class))).thenAnswer(inv -> {
-            Pet p = inv.getArgument(0);
-            p.setId(1L);
-            return p;
-        });
+        when(petRepository.save(any(Pet.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
         Pet pet = petService.cadastrar(10L, form);
 
-        assertThat(pet.getId()).isEqualTo(1L);
-        assertThat(pet.getCastrado()).isEqualTo("S");
-
-        ArgumentCaptor<PetTutor> captor = ArgumentCaptor.forClass(PetTutor.class);
-        verify(petTutorRepository).save(captor.capture());
-        assertThat(captor.getValue().getPet()).isEqualTo(pet);
-        assertThat(captor.getValue().getTutor()).isEqualTo(tutor);
-        assertThat(captor.getValue().isResponsavelPrincipal()).isTrue();
+        assertThat(pet.getNome()).isEqualTo("Thor");
+        assertThat(pet.getRaca()).isNull();
+        assertThat(pet.isCastrado()).isTrue();
+        ArgumentCaptor<PetTutor> vinculo = ArgumentCaptor.forClass(PetTutor.class);
+        verify(petTutorRepository).save(vinculo.capture());
+        assertThat(vinculo.getValue().getTutor()).isEqualTo(tutor);
+        assertThat(vinculo.getValue().isResponsavelPrincipal()).isTrue();
     }
 
     @Test
-    void buscarDoTutorComPetDeOutroTutorLancaExcecao() {
-        Pet pet = Pet.builder().id(1L).nome("Rex").build();
-        when(petRepository.findById(1L)).thenReturn(Optional.of(pet));
-        when(petRepository.existeVinculoComTutor(1L, 999L)).thenReturn(false);
+    void buscarPetDeOutroTutorGeraRecursoNaoEncontrado() {
+        when(petRepository.existeVinculoComTutor(1L, 99L)).thenReturn(false);
 
-        assertThatThrownBy(() -> petService.buscarDoTutor(1L, 999L))
-                .isInstanceOf(RecursoNaoEncontradoException.class);
+        assertThatThrownBy(() -> petService.buscarDoTutor(1L, 99L)).isInstanceOf(RecursoNaoEncontradoException.class);
     }
 
     @Test
-    void buscarDoTutorInexistenteLancaExcecao() {
-        when(petRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> petService.buscarDoTutor(1L, 10L))
-                .isInstanceOf(RecursoNaoEncontradoException.class);
-    }
-
-    @Test
-    void excluirDelegaParaORepositorioApenasQuandoOPetPertenceAoTutor() {
-        Pet pet = Pet.builder().id(1L).nome("Rex").build();
-        when(petRepository.findById(1L)).thenReturn(Optional.of(pet));
+    void excluiPetSemHistorico() {
         when(petRepository.existeVinculoComTutor(1L, 10L)).thenReturn(true);
+        when(petRepository.findById(1L)).thenReturn(Optional.of(rex));
 
         petService.excluir(1L, 10L);
 
-        verify(petRepository).delete(pet);
+        verify(petRepository).delete(rex);
+    }
+
+    @Test
+    void naoExcluiPetComHistoricoDeTriagens() {
+        when(petRepository.existeVinculoComTutor(1L, 10L)).thenReturn(true);
+        when(petRepository.findById(1L)).thenReturn(Optional.of(rex));
+        when(triagemRepository.existsByPetId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> petService.excluir(1L, 10L))
+                .isInstanceOf(RegraNegocioException.class)
+                .hasMessageContaining("histórico");
+        verify(petRepository, never()).delete(any());
     }
 }

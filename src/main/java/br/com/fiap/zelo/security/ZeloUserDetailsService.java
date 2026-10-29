@@ -21,7 +21,7 @@ public class ZeloUserDetailsService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Nao existe usuario cadastrado com o e-mail informado."));
+                .orElseThrow(() -> new UsernameNotFoundException("Não existe usuário cadastrado com o e-mail informado."));
         return new ZeloUserPrincipal(usuario);
     }
 }

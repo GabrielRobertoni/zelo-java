@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head><title>Equipe da clínica</title></head>
+<body>
+<main layout:fragment="conteudo" class="container">
+    <ul th:replace="~{fragments/componentes :: abasGestor('equipe')}"></ul>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card card-zelo p-4 mb-4 card-convite">
+                <h1 class="h5 mb-1"><i class="bi bi-key"></i> Código de convite</h1>
+                <p class="small text-muted">Veterinários usam este código em <em>Criar conta &gt; Sou veterinário</em>
+                    para entrar na equipe de <strong th:text="${clinica.nome}">clínica</strong>.</p>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <code class="codigo-convite" id="codigo-convite" th:text="${clinica.codigoConvite}">CODIGO</code>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-copiar="#codigo-convite">
+                        <i class="bi bi-clipboard"></i> Copiar</button>
+                    <form th:replace="~{fragments/componentes :: acao('/clinica/gerenciar/convite', 'Gerar novo código', 'btn-outline-secondary', 'bi-arrow-repeat',
+                          'Gerar um novo código? O código atual deixará de funcionar.')}"></form>
+                </div>
+            </div>
+
+            <div class="card card-zelo p-4">
+                <h2 class="h5 mb-3">Membros da equipe <span class="text-muted fw-normal" th:text="'(' + ${#lists.size(membros)} + ')'"></span></h2>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2" th:each="m : ${membros}">
+                        <div>
+                            <strong th:text="${m.nome}">Nome</strong>
+                            <span class="badge badge-perfil" th:text="${m.tipoUsuario.rotulo}">Perfil</span>
+                            <span class="badge badge-status-CANCELADA" th:unless="${m.ativo}">Acesso desativado</span>
+                            <div class="small text-muted" th:text="${m.email}">e-mail</div>
+                        </div>
+                        <span class="small text-muted" th:if="${m.id == #authentication.principal.usuarioId}">Você</span>
+                        <th:block th:unless="${m.id == #authentication.principal.usuarioId}">
+                            <form th:replace="~{fragments/componentes :: acao('/clinica/gerenciar/equipe/' + ${m.id} + '/alternar',
+                                  ${m.ativo} ? 'Desativar acesso' : 'Reativar acesso',
+                                  ${m.ativo} ? 'btn-outline-danger' : 'btn-outline-success',
+                                  ${m.ativo} ? 'bi-person-x' : 'bi-person-check',
+                                  ${m.ativo} ? 'Desativar o acesso deste membro? Ele não conseguirá mais entrar.' : null)}"></form>
+                        </th:block>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card card-zelo p-4">
+                <h2 class="h5 mb-1">Cadastrar membro</h2>
+                <p class="small text-muted">Crie o acesso de um veterinário ou de outro gestor. Compartilhe o e-mail e a
+                    senha inicial com a pessoa.</p>
+                <form th:action="@{/clinica/gerenciar/equipe}" th:object="${form}" method="post" novalidate>
+                    <div th:replace="~{fragments/campos :: errosGerais}"></div>
+                    <div th:replace="~{fragments/campos :: selecaoEnum('tipoUsuario', 'Perfil', ${perfisEquipe}, null)}"></div>
+                    <th:block th:replace="~{fragments/campos :: dadosAcesso}"></th:block>
+                    <button type="submit" class="btn btn-zelo w-100"><i class="bi bi-person-plus"></i> Adicionar à equipe</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

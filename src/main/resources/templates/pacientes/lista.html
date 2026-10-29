@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title>Pacientes</title></head>
+<body>
+<main layout:fragment="conteudo" class="container">
+    <div th:replace="~{fragments/componentes :: cabecalho('Pacientes da clínica', 'Pets que já enviaram triagem para a clínica. Abra um paciente para ver o histórico registrado aqui.')}"></div>
+
+    <th:block th:if="${#lists.isEmpty(pacientes)}">
+        <div class="card card-zelo p-4 mt-3">
+            <div th:replace="~{fragments/componentes :: vazio('bi-people', 'A clínica ainda não recebeu triagens.')}"></div>
+        </div>
+    </th:block>
+
+    <div class="table-responsive mt-3" th:unless="${#lists.isEmpty(pacientes)}">
+        <table class="table table-hover align-middle bg-white">
+            <thead><tr><th>Paciente</th><th>Espécie</th><th class="text-end">Triagens</th><th>Última triagem</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${pacientes}">
+                <td><a class="fw-semibold" th:href="@{'/clinica/pacientes/' + ${p.petId}}" th:text="${p.petNome}">Pet</a></td>
+                <td th:text="${p.especie.rotulo}">Espécie</td>
+                <td class="text-end" th:text="${p.totalTriagens}">0</td>
+                <td th:text="${#temporals.format(p.ultimaTriagem, 'dd/MM/yyyy HH:mm')}">Data</td>
+                <td class="text-end"><a th:href="@{'/clinica/pacientes/' + ${p.petId}}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-clock-history"></i> Histórico</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

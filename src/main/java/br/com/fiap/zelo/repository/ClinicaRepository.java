@@ -14,4 +14,15 @@ public interface ClinicaRepository extends JpaRepository<Clinica, Long> {
 
     @Query("select c from Clinica c join c.equipe u where u.id = :usuarioId")
     Optional<Clinica> findByMembroEquipeId(@Param("usuarioId") Long usuarioId);
+
+    @Query("select c from Clinica c left join fetch c.equipe where c.id = :clinicaId")
+    Optional<Clinica> findComEquipe(@Param("clinicaId") Long clinicaId);
+
+    Optional<Clinica> findByCodigoConviteIgnoreCase(String codigoConvite);
+
+    boolean existsByCnpj(String cnpj);
+
+    boolean existsByCnpjAndIdNot(String cnpj, Long id);
+
+    boolean existsByCodigoConvite(String codigoConvite);
 }

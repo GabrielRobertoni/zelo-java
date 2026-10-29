@@ -1,66 +1,65 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:replace="~{fragments/head :: head('Cuidado continuo antes da urgencia')}"></head>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+<head><title>Cuidado contínuo antes da urgência</title></head>
 <body>
-<div th:replace="~{fragments/nav :: nav}"></div>
-<div th:replace="~{fragments/mensagens :: mensagens}"></div>
-
-<main>
+<main layout:fragment="conteudo">
     <section class="hero-zelo-wrap">
         <div class="container">
-            <div class="row align-items-center g-5 py-4">
+            <div class="row align-items-center g-4 g-lg-5 py-4">
                 <div class="col-lg-6">
-                    <span class="hero-eyebrow"><i class="bi bi-heart-pulse-fill"></i> Cuidado veterinario continuo</span>
-                    <h1 class="hero-title">Zelo: cuidado continuo <span class="text-accent">antes</span> da urgencia.</h1>
-                    <p class="hero-subtitle">Um sistema operacional de cuidado continuo para pets, que aproxima o
-                        tutor da clinica veterinaria e transforma a saude animal em uma jornada acompanhada ao
-                        longo do tempo.</p>
+                    <span class="hero-eyebrow"><i class="bi bi-heart-pulse-fill"></i> Cuidado veterinário contínuo</span>
+                    <h1 class="hero-title">Zelo: cuidado contínuo <span class="text-accent">antes</span> da urgência.</h1>
+                    <p class="hero-subtitle">A maioria das emergências veterinárias começa com um sinal ignorado ou uma
+                        vacina esquecida. O Zelo conecta tutores e clínicas para transformar a saúde do pet em uma
+                        jornada acompanhada, e não em uma sequência de sustos.</p>
 
                     <div class="hero-actions" sec:authorize="!isAuthenticated()">
                         <a th:href="@{/registro}" class="btn btn-hero-primary btn-lg">Criar minha conta</a>
                         <a th:href="@{/login}" class="btn btn-hero-outline btn-lg">Entrar</a>
                     </div>
                     <div class="hero-actions" sec:authorize="hasRole('TUTOR')">
-                        <a th:href="@{/tutor/dashboard}" class="btn btn-hero-primary btn-lg">Ir para o meu painel</a>
+                        <a th:href="@{/tutor/painel}" class="btn btn-hero-primary btn-lg">Ir para o meu painel</a>
                     </div>
                     <div class="hero-actions" sec:authorize="hasAnyRole('VETERINARIO','GESTOR')">
-                        <a th:href="@{/clinica/dashboard}" class="btn btn-hero-primary btn-lg">Ir para o painel da clinica</a>
+                        <a th:href="@{/clinica/painel}" class="btn btn-hero-primary btn-lg">Ir para o painel da clínica</a>
                     </div>
 
                     <div class="hero-chips">
-                        <span class="hero-chip"><i class="bi bi-lightning-charge-fill"></i> Classificacao automatica de urgencia</span>
+                        <span class="hero-chip"><i class="bi bi-lightning-charge-fill"></i> Triagem com urgência classificada</span>
                         <span class="hero-chip"><i class="bi bi-list-check"></i> Fila priorizada por risco</span>
-                        <span class="hero-chip"><i class="bi bi-calendar-heart"></i> Plano de cuidado continuo</span>
+                        <span class="hero-chip"><i class="bi bi-calendar-heart"></i> Plano de cuidado contínuo</span>
                     </div>
                 </div>
 
                 <div class="col-lg-6">
+                    <div class="hero-visual" aria-hidden="true">
+                    <div class="hero-flutuante hero-flutuante-1">
+                        <span class="icone-tom"><i class="bi bi-calendar-check"></i></span>
+                        <div><strong>Vacina V10 em dia</strong><span>Plano de cuidado do Thor</span></div>
+                    </div>
                     <div class="hero-mock">
                         <div class="hero-mock-header">
                             <span class="hero-mock-dot"></span><span class="hero-mock-dot"></span><span class="hero-mock-dot"></span>
-                            <span class="hero-mock-title">Fila de atencao</span>
+                            <span class="hero-mock-title">Fila de atenção da clínica</span>
                         </div>
                         <div class="hero-mock-item">
-                            <div>
-                                <strong>Mia</strong>
-                                <div class="hero-mock-sub">Score de risco 82 &middot; Canal: App</div>
-                            </div>
-                            <span class="badge text-white badge-urgencia-ALTA">ALTA</span>
+                            <div><strong>Rex</strong><div class="hero-mock-sub">"Engasgou e não consegue respirar" · score 93</div></div>
+                            <span class="badge badge-urgencia badge-urgencia-EMERGENCIA">Emergência</span>
                         </div>
                         <div class="hero-mock-item">
-                            <div>
-                                <strong>Rex</strong>
-                                <div class="hero-mock-sub">Score de risco 24 &middot; Canal: WhatsApp</div>
-                            </div>
-                            <span class="badge text-white badge-urgencia-BAIXA">BAIXA</span>
+                            <div><strong>Bolt</strong><div class="hero-mock-sub">"Gemendo de dor na barriga" · score 65</div></div>
+                            <span class="badge badge-urgencia badge-urgencia-ALTA">Alta</span>
                         </div>
                         <div class="hero-mock-item">
-                            <div>
-                                <strong>Tom</strong>
-                                <div class="hero-mock-sub">Score de risco 55 &middot; Canal: Telefone</div>
-                            </div>
-                            <span class="badge text-white badge-urgencia-MEDIA">MEDIA</span>
+                            <div><strong>Nina</strong><div class="hero-mock-sub">"Diarreia leve desde ontem" · score 40</div></div>
+                            <span class="badge badge-urgencia badge-urgencia-MEDIA">Média</span>
                         </div>
+                    </div>
+                    <div class="hero-flutuante hero-flutuante-2">
+                        <span class="icone-tom tom-atencao"><i class="bi bi-graph-up-arrow"></i></span>
+                        <div><strong>67% de adesão</strong><span>ao plano de cuidado</span></div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -68,82 +67,54 @@
     </section>
 
     <div class="container">
-        <section class="py-5">
-            <div class="section-heading text-center mx-auto">
-                <span class="section-eyebrow">Como funciona</span>
-                <h2>Uma rotina simples de cuidado preventivo</h2>
-            </div>
-            <div class="row g-4 mt-2">
-                <div class="col-md-4">
-                    <div class="card card-zelo h-100 p-4">
-                        <div class="feature-icon"><i class="bi bi-clipboard2-pulse"></i></div>
-                        <h5>Para o tutor</h5>
-                        <p class="mb-0">Cadastre seu pet, registre triagens quando algo preocupar e acompanhe o
-                            plano de cuidado (vacinas, retornos e medicamentos) sem depender de lembrar de tudo
-                            sozinho.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card card-zelo h-100 p-4">
-                        <div class="feature-icon"><i class="bi bi-hospital"></i></div>
-                        <h5>Para a clinica</h5>
-                        <p class="mb-0">Receba triagens ja classificadas por nivel de urgencia, atenda a fila com
-                            prioridade e mantenha o historico de cuidados de cada pet acompanhado.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card card-zelo h-100 p-4">
-                        <div class="feature-icon"><i class="bi bi-arrow-repeat"></i></div>
-                        <h5>Ciclo Zelo</h5>
-                        <p class="mb-0">Uma rotina simples de cuidado preventivo: orientacao objetiva, confirmacao
-                            do que foi realizado e retomada respeitosa quando o tutor se afasta.</p>
-                    </div>
-                </div>
+        <section class="faixa-numeros">
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-3"><div class="numero">3</div><div class="numero-legenda">perfis com painel próprio</div></div>
+                <div class="col-6 col-md-3"><div class="numero">4</div><div class="numero-legenda">níveis de urgência</div></div>
+                <div class="col-6 col-md-3"><div class="numero">6</div><div class="numero-legenda">indicadores para a gestão</div></div>
+                <div class="col-6 col-md-3"><div class="numero">1</div><div class="numero-legenda">linha do tempo por pet</div></div>
             </div>
         </section>
 
-        <section class="steps-section py-4" sec:authorize="!isAuthenticated()">
-            <div class="section-heading text-center mx-auto mb-4">
-                <span class="section-eyebrow">Comece agora</span>
-                <h2>Tres passos para o primeiro cuidado</h2>
+        <section class="py-5">
+            <div class="section-heading text-center mx-auto">
+                <span class="section-eyebrow">Como funciona</span>
+                <h2>Três perfis, um mesmo cuidado</h2>
             </div>
-            <div class="row g-4">
+            <div class="row g-4 mt-2">
                 <div class="col-md-4">
-                    <div class="step-item">
-                        <span class="step-number">1</span>
-                        <h6>Cadastre seu pet</h6>
-                        <p class="small text-muted mb-0">Leva menos de um minuto: nome, especie, raca e alguns
-                            detalhes de saude.</p>
+                    <div class="card card-zelo card-recurso perfil-tutor h-100 p-4">
+                        <div class="feature-icon"><i class="bi bi-person-heart"></i></div>
+                        <h3 class="h5">Tutor</h3>
+                        <p class="mb-0 text-muted">Cadastra os pets, relata sintomas em uma triagem e acompanha vacinas, check-ups
+                            e retornos no plano de cuidado, com a linha do tempo de cada pet.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="step-item">
-                        <span class="step-number">2</span>
-                        <h6>Registre uma triagem</h6>
-                        <p class="small text-muted mb-0">Conte o que esta acontecendo &mdash; o Zelo classifica a
-                            urgencia e encaminha para a clinica.</p>
+                    <div class="card card-zelo card-recurso perfil-vet h-100 p-4">
+                        <div class="feature-icon"><i class="bi bi-clipboard2-pulse"></i></div>
+                        <h3 class="h5">Veterinário</h3>
+                        <p class="mb-0 text-muted">Recebe triagens já classificadas por urgência, atende a fila por prioridade e
+                            recomenda cuidados aos pacientes da clínica.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="step-item">
-                        <span class="step-number">3</span>
-                        <h6>Acompanhe o cuidado</h6>
-                        <p class="small text-muted mb-0">Vacinas, retornos e lembretes ficam organizados num so
-                            lugar, sem depender da memoria.</p>
+                    <div class="card card-zelo card-recurso perfil-gestor h-100 p-4">
+                        <div class="feature-icon"><i class="bi bi-hospital"></i></div>
+                        <h3 class="h5">Gestor</h3>
+                        <p class="mb-0 text-muted">Cadastra a clínica, monta a equipe com código de convite e acompanha os
+                            indicadores de atendimento e de adesão ao plano de cuidado.</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <section class="cta-band my-5 p-5 text-center" sec:authorize="!isAuthenticated()">
-            <h3 class="mb-2">Pronto para cuidar melhor do seu pet?</h3>
-            <p class="mb-4">Crie sua conta gratuita e comece a acompanhar a saude do seu companheiro hoje mesmo.</p>
-            <a th:href="@{/registro}" class="btn btn-hero-primary btn-lg">Criar minha conta</a>
+            <h2 class="h3 mb-2">Pronto para cuidar antes da urgência?</h2>
+            <p class="mb-4">Crie sua conta como tutor, veterinário ou gestor de clínica.</p>
+            <a th:href="@{/registro}" class="btn btn-hero-primary btn-lg">Escolher meu perfil</a>
         </section>
     </div>
 </main>
-
-<div th:replace="~{fragments/footer :: footer}"></div>
-<div th:replace="~{fragments/scripts :: scripts}"></div>
 </body>
 </html>

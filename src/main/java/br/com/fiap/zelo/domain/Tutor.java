@@ -9,11 +9,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/**
- * Corresponde a tabela T_CH_TUTOR (schema real do time de Banco de Dados):
- * dados complementares de um usuario que exerce o papel de tutor (relacao
- * 1:1 com T_CH_USUARIO).
- */
+/** Dados complementares do usuário com perfil TUTOR (T_CH_TUTOR, 1:1 com T_CH_USUARIO). */
 @Entity
 @Table(name = "T_CH_TUTOR")
 @Getter

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title>Criar conta</title></head>
+<body>
+<main layout:fragment="conteudo" class="container py-5">
+    <div class="text-center mb-4">
+        <span class="hero-eyebrow"><i class="bi bi-person-plus"></i> Criar conta</span>
+        <h1 class="display-6 fw-bold">Como você vai usar o Zelo?</h1>
+        <p class="text-muted">Escolha o seu perfil. Cada um tem um painel e permissões próprias.</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <a th:href="@{/registro/tutor}" class="card-perfil perfil-tutor">
+                <div class="feature-icon"><i class="bi bi-person-heart"></i></div>
+                <h2 class="h5">Sou tutor</h2>
+                <p>Acompanhe a saúde dos seus pets do começo ao fim.</p>
+                <ul class="lista-check">
+                    <li><i class="bi bi-check-circle-fill"></i> Cadastre seus pets</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Registre triagens com urgência na hora</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Siga o plano de cuidado e a linha do tempo</li>
+                </ul>
+                <span class="btn btn-zelo btn-sm">Criar conta de tutor <i class="bi bi-arrow-right seta"></i></span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a th:href="@{/registro/veterinario}" class="card-perfil perfil-vet">
+                <div class="feature-icon"><i class="bi bi-clipboard2-pulse"></i></div>
+                <h2 class="h5">Sou veterinário</h2>
+                <p>Entre na equipe de uma clínica com o código de convite do gestor.</p>
+                <ul class="lista-check">
+                    <li><i class="bi bi-check-circle-fill"></i> Fila de atenção priorizada por risco</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Histórico completo de cada paciente</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Recomende cuidados aos tutores</li>
+                </ul>
+                <span class="btn btn-zelo btn-sm">Criar conta de veterinário <i class="bi bi-arrow-right seta"></i></span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a th:href="@{/registro/gestor}" class="card-perfil perfil-gestor">
+                <div class="feature-icon"><i class="bi bi-hospital"></i></div>
+                <h2 class="h5">Sou gestor de clínica</h2>
+                <p>Cadastre a sua clínica e acompanhe o atendimento de perto.</p>
+                <ul class="lista-check">
+                    <li><i class="bi bi-check-circle-fill"></i> Monte a equipe com código de convite</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Painel com indicadores e gráficos</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Controle a disponibilidade da clínica</li>
+                </ul>
+                <span class="btn btn-zelo btn-sm">Cadastrar minha clínica <i class="bi bi-arrow-right seta"></i></span>
+            </a>
+        </div>
+    </div>
+    <p class="text-center mt-4">Já tem conta? <a th:href="@{/login}">Entrar</a></p>
+</main>
+</body>
+</html>

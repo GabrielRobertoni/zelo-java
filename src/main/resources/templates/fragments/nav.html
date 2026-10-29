@@ -1,58 +1,83 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<nav th:fragment="nav" class="navbar navbar-expand-lg navbar-zelo sticky-top mb-4">
+<!--/* Barra superior das páginas públicas (início, login e cadastro). */-->
+<nav th:fragment="barraSuperior" class="navbar navbar-expand-lg navbar-zelo sticky-top" aria-label="Navegação principal">
     <div class="container">
-        <a class="navbar-brand" th:href="@{/}"><i class="bi bi-heart-pulse-fill"></i> Zelo</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navZelo">
+        <a class="navbar-brand" th:href="@{/}"><span class="marca-icone"><i class="bi bi-heart-pulse-fill"></i></span> Zelo</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navZelo"
+                aria-controls="navZelo" aria-expanded="false" aria-label="Abrir menu">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navZelo">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item" sec:authorize="hasRole('TUTOR')">
-                    <a class="nav-link" th:href="@{/tutor/dashboard}"><i class="bi bi-speedometer2"></i> Painel</a>
-                </li>
-                <li class="nav-item" sec:authorize="hasRole('TUTOR')">
-                    <a class="nav-link" th:href="@{/tutor/pets}"><i class="bi bi-egg-fill"></i> Meus pets</a>
-                </li>
-                <li class="nav-item" sec:authorize="hasRole('TUTOR')">
-                    <a class="nav-link" th:href="@{/tutor/triagens}"><i class="bi bi-clipboard2-pulse"></i> Triagens</a>
-                </li>
-                <li class="nav-item" sec:authorize="hasRole('TUTOR')">
-                    <a class="nav-link" th:href="@{/tutor/alertas}"><i class="bi bi-calendar-heart"></i> Plano de cuidado</a>
-                </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('VETERINARIO','GESTOR')">
-                    <a class="nav-link" th:href="@{/clinica/dashboard}"><i class="bi bi-speedometer2"></i> Painel</a>
-                </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('VETERINARIO','GESTOR')">
-                    <a class="nav-link" th:href="@{/clinica/triagens}"><i class="bi bi-list-check"></i> Fila de atencao</a>
-                </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('VETERINARIO','GESTOR')">
-                    <a class="nav-link" th:href="@{/clinica/alertas}"><i class="bi bi-bell-fill"></i> Alertas</a>
-                </li>
-                <li class="nav-item" sec:authorize="hasRole('GESTOR')">
-                    <a class="nav-link" th:href="@{/clinica/gerenciar}"><i class="bi bi-hospital"></i> Minha clinica</a>
-                </li>
-            </ul>
-            <ul class="navbar-nav align-items-lg-center gap-lg-2">
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <span class="nav-link disabled nav-user"><i class="bi bi-person-circle"></i> <span sec:authentication="name">usuario</span></span>
-                </li>
-                <li class="nav-item" sec:authorize="isAuthenticated()">
-                    <form th:action="@{/logout}" method="post" class="d-inline">
-                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-sm btn-nav-outline">Sair</button>
-                    </form>
-                </li>
-                <li class="nav-item" sec:authorize="!isAuthenticated()">
-                    <a class="nav-link" th:href="@{/login}">Entrar</a>
-                </li>
-                <li class="nav-item" sec:authorize="!isAuthenticated()">
-                    <a th:href="@{/registro}" class="btn btn-sm btn-nav-primary">Criar conta</a>
-                </li>
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                <li class="nav-item"><a class="nav-link" th:href="@{/login}">Entrar</a></li>
+                <li class="nav-item"><a th:href="@{/registro}" class="btn btn-sm btn-nav-primary">Criar conta</a></li>
             </ul>
         </div>
     </div>
 </nav>
+
+<!--/* Menu lateral das áreas logadas: fixo no computador, gaveta (offcanvas) no celular. */-->
+<!--/* Espera as variáveis "caminho" e "usuario", definidas pelo layout. */-->
+<th:block th:fragment="menuLateral">
+    <header class="topo-movel d-lg-none">
+        <a class="navbar-brand" th:href="@{/}"><span class="marca-icone"><i class="bi bi-heart-pulse-fill"></i></span> Zelo</a>
+        <button class="btn btn-topo-movel" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuLateral"
+                aria-controls="menuLateral" aria-label="Abrir menu"><i class="bi bi-list"></i></button>
+    </header>
+
+    <aside class="offcanvas-lg offcanvas-start menu-lateral" id="menuLateral" tabindex="-1" aria-label="Navegação principal">
+        <div class="menu-lateral-topo">
+            <a class="menu-marca" th:href="@{/}"><span class="marca-icone"><i class="bi bi-heart-pulse-fill"></i></span> Zelo</a>
+            <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas"
+                    data-bs-target="#menuLateral" aria-label="Fechar menu"></button>
+        </div>
+
+        <nav class="menu-lateral-corpo">
+            <span class="menu-secao" th:text="${usuario.tipoUsuario.name() == 'TUTOR'} ? 'Cuidado dos pets' : 'Clínica'">Menu</span>
+            <ul class="nav flex-column menu-nav" sec:authorize="hasRole('TUTOR')">
+                <li th:replace="~{fragments/nav :: item('/tutor/painel', 'bi-grid-1x2', 'Painel')}"></li>
+                <li th:replace="~{fragments/nav :: item('/tutor/pets', 'bi-heart', 'Meus pets')}"></li>
+                <li th:replace="~{fragments/nav :: item('/tutor/triagens', 'bi-clipboard2-pulse', 'Triagens')}"></li>
+                <li th:replace="~{fragments/nav :: item('/tutor/alertas', 'bi-calendar-heart', 'Plano de cuidado')}"></li>
+            </ul>
+            <ul class="nav flex-column menu-nav" sec:authorize="hasAnyRole('VETERINARIO','GESTOR')">
+                <li th:replace="~{fragments/nav :: item('/clinica/painel', 'bi-grid-1x2', 'Painel')}"></li>
+                <li th:replace="~{fragments/nav :: item('/clinica/triagens', 'bi-list-check', 'Fila de atenção')}"></li>
+                <li th:replace="~{fragments/nav :: item('/clinica/pacientes', 'bi-people', 'Pacientes')}"></li>
+                <li th:replace="~{fragments/nav :: item('/clinica/alertas', 'bi-bell', 'Alertas')}"></li>
+                <th:block sec:authorize="hasRole('GESTOR')">
+                    <li th:replace="~{fragments/nav :: item('/clinica/gerenciar', 'bi-hospital', 'Minha clínica')}"></li>
+                </th:block>
+            </ul>
+
+            <div class="menu-destaque" sec:authorize="hasRole('TUTOR')">
+                <i class="bi bi-lightning-charge-fill"></i>
+                <p>Notou algo diferente no seu pet?</p>
+                <a th:href="@{/tutor/triagens/nova}" class="btn btn-sm btn-light w-100">Registrar triagem</a>
+            </div>
+        </nav>
+
+        <div class="menu-usuario">
+            <span class="avatar-iniciais" th:text="${usuario.iniciais}" aria-hidden="true">AG</span>
+            <div class="menu-usuario-dados">
+                <strong th:text="${usuario.nome}">Usuário</strong>
+                <span th:text="${usuario.tipoUsuario.rotulo}">Perfil</span>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="btn btn-sair" title="Sair" aria-label="Sair"><i class="bi bi-box-arrow-right"></i></button>
+            </form>
+        </div>
+    </aside>
+</th:block>
+
+<li th:fragment="item(url, icone, rotulo)" class="nav-item">
+    <a class="nav-link" th:href="@{${url}}"
+       th:classappend="${caminho != null and #strings.startsWith(caminho, url)} ? 'active'"
+       th:attr="aria-current=${caminho != null and #strings.startsWith(caminho, url)} ? 'page'">
+        <i class="bi" th:classappend="${icone}"></i> <span th:text="${rotulo}">Item</span>
+    </a>
+</li>
 </body>
 </html>

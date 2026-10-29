@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Botão de ação (POST protegido por CSRF), opcionalmente com confirmação; volta para a página atual. */-->
+<form th:fragment="acao(url, rotulo, estilo, icone, confirmacao)" th:action="@{${url}}" method="post" class="d-inline"
+      th:attr="data-confirmar=${confirmacao}">
+    <input type="hidden" name="voltarPara" th:value="${caminhoAtual}"/>
+    <button type="submit" class="btn btn-sm" th:classappend="${estilo}">
+        <i class="bi" th:classappend="${icone}" aria-hidden="true"></i> <span th:text="${rotulo}">Ação</span>
+    </button>
+</form>
+
+<span th:fragment="urgencia(nivel)" class="badge badge-urgencia" th:classappend="'badge-urgencia-' + ${nivel.name()}"
+      th:text="${nivel.rotulo}">Urgência</span>
+
+<span th:fragment="statusTriagem(status)" class="badge badge-status" th:classappend="'badge-status-' + ${status.name()}"
+      th:text="${status.rotulo}">Status</span>
+
+<span th:fragment="statusAlerta(alerta)" class="badge badge-status"
+      th:classappend="${alerta.atrasado} ? 'badge-status-ATRASADO' : 'badge-status-' + ${alerta.statusAlerta.name()}"
+      th:text="${alerta.atrasado} ? 'Atrasado' : ${alerta.statusAlerta.rotulo}">Status</span>
+
+<div th:fragment="vazio(icone, mensagem)" class="estado-vazio">
+    <i class="bi" th:classappend="${icone}" aria-hidden="true"></i>
+    <p class="mb-0" th:text="${mensagem}">Nada por aqui.</p>
+</div>
+
+<div th:fragment="cabecalho(titulo, subtitulo)" class="cabecalho-pagina">
+    <h1 class="h3 mb-1" th:text="${titulo}">Título</h1>
+    <p class="text-muted mb-0" th:if="${subtitulo}" th:text="${subtitulo}">Subtítulo</p>
+</div>
+
+<div th:fragment="indicadores(lista)" class="row g-3 mb-4">
+    <div class="col-6" th:each="indicador : ${lista}"
+         th:classappend="${#lists.size(lista) == 4} ? 'col-xl-3' : 'col-md-4 col-xxl-2'">
+        <div class="card-indicador h-100" th:classappend="'tom-' + ${indicador.tom}">
+            <div class="indicador-topo">
+                <span class="indicador-icone"><i class="bi" th:classappend="${indicador.icone}" aria-hidden="true"></i></span>
+                <span class="indicador-titulo" th:text="${indicador.titulo}">Título</span>
+            </div>
+            <div class="indicador-valor" th:text="${indicador.valor}">0</div>
+            <div class="indicador-detalhe" th:text="${indicador.detalhe}">Detalhe</div>
+        </div>
+    </div>
+</div>
+
+<!--/* Gráfico desenhado por /js/painel.js a partir de window.ZELO_GRAFICOS[chave]. */-->
+<div th:fragment="grafico(chave, tipo, titulo, descricao, dados)" class="card card-zelo p-3 h-100">
+    <div class="cabecalho-cartao mb-1">
+        <h2 class="h6"><span class="icone-tom" aria-hidden="true"
+              th:classappend="${tipo == 'doughnut'} ? 'tom-atencao' : (${tipo == 'bar-horizontal'} ? 'tom-azul' : '')"><i class="bi"
+              th:classappend="${tipo == 'doughnut'} ? 'bi-pie-chart' : (${tipo == 'bar-horizontal'} ? 'bi-bar-chart-steps' : 'bi-bar-chart-line')"></i></span>
+            <span th:text="${titulo}">Gráfico</span></h2>
+    </div>
+    <p class="small text-muted mb-3" th:text="${descricao}">Descrição</p>
+    <div class="grafico-container" th:if="${dados.total() > 0}">
+        <canvas th:attr="data-grafico=${chave},data-tipo=${tipo},aria-label=${titulo}" role="img"></canvas>
+    </div>
+    <th:block th:unless="${dados.total() > 0}">
+        <div th:replace="~{fragments/componentes :: vazio('bi-bar-chart', 'Ainda não há dados para este período.')}"></div>
+    </th:block>
+</div>
+
+<ol th:fragment="linhaDoTempo(eventos)" class="linha-do-tempo">
+    <li th:each="evento : ${eventos}" th:classappend="${evento.futuro} ? 'futuro'">
+        <span class="marcador" th:classappend="${evento.triagem} ? 'marcador-triagem' : 'marcador-cuidado'">
+            <i class="bi" th:classappend="${evento.icone}" aria-hidden="true"></i>
+        </span>
+        <div class="evento">
+            <div class="d-flex flex-wrap justify-content-between gap-2">
+                <strong th:text="${evento.titulo}">Título</strong>
+                <span class="small text-muted"
+                      th:text="${evento.triagem} ? ${#temporals.format(evento.momento, 'dd/MM/yyyy HH:mm')} : 'Previsto para ' + ${#temporals.format(evento.momento, 'dd/MM/yyyy')}">Data</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2 my-1">
+                <span class="badge" th:classappend="${evento.destaque}" th:text="${evento.selo}">Selo</span>
+                <span class="badge badge-status" th:classappend="${evento.classeSituacao}" th:text="${evento.situacao}">Situação</span>
+            </div>
+            <p class="mb-1" th:if="${evento.descricao}" th:text="${evento.descricao}">Descrição</p>
+            <p class="small text-muted mb-0" th:if="${evento.origem}"><i class="bi bi-geo-alt"></i> <span th:text="${evento.origem}">Origem</span></p>
+        </div>
+    </li>
+</ol>
+
+<section th:fragment="erro(codigo, icone, titulo, mensagemPadrao)" class="container error-page text-center py-5">
+    <div class="feature-icon mx-auto"><i class="bi" th:classappend="${icone}" aria-hidden="true"></i></div>
+    <p class="display-4 mb-1" th:text="${codigo}">404</p>
+    <h1 class="h4" th:text="${titulo}">Título</h1>
+    <p class="lead text-muted" th:text="${mensagem} ?: ${mensagemPadrao}">Mensagem</p>
+    <a th:href="@{/}" class="btn btn-zelo mt-2"><i class="bi bi-house"></i> Voltar para o início</a>
+</section>
+
+<ul th:fragment="abasGestor(ativa)" class="nav nav-pills abas mb-3">
+    <li class="nav-item"><a class="nav-link" th:classappend="${ativa == 'dados'} ? 'active'" th:href="@{/clinica/gerenciar}">
+        <i class="bi bi-hospital"></i> Dados da clínica</a></li>
+    <li class="nav-item"><a class="nav-link" th:classappend="${ativa == 'equipe'} ? 'active'" th:href="@{/clinica/gerenciar/equipe}">
+        <i class="bi bi-people"></i> Equipe</a></li>
+</ul>
+</body>
+</html>

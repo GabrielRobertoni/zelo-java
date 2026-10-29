@@ -1,47 +1,48 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Plano de cuidado')}"></head>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title>Plano de cuidado</title></head>
 <body>
-<div th:replace="~{fragments/nav :: nav}"></div>
-<div th:replace="~{fragments/mensagens :: mensagens}"></div>
-
-<main class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Plano de cuidado (Ciclo Zelo)</h2>
-        <a th:href="@{/tutor/alertas/novo}" class="btn btn-zelo">Novo lembrete</a>
+<main layout:fragment="conteudo" class="container">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div th:replace="~{fragments/componentes :: cabecalho('Plano de cuidado', 'Vacinas, check-ups e retornos dos seus pets, com lembretes seus e recomendações das clínicas.')}"></div>
+        <a th:href="@{/tutor/alertas/novo}" class="btn btn-zelo"><i class="bi bi-plus-lg"></i> Novo lembrete</a>
     </div>
 
-    <p class="text-muted" th:if="${#lists.isEmpty(alertas)}">Nenhum cuidado pendente. Tudo em dia!</p>
+    <ul class="nav nav-pills abas my-3">
+        <li class="nav-item"><a class="nav-link" th:classappend="${aba == 'pendentes'} ? 'active'" th:href="@{/tutor/alertas}">
+            <i class="bi bi-hourglass-split"></i> Pendentes</a></li>
+        <li class="nav-item"><a class="nav-link" th:classappend="${aba == 'historico'} ? 'active'" th:href="@{/tutor/alertas(aba='historico')}">
+            <i class="bi bi-archive"></i> Histórico</a></li>
+    </ul>
+
+    <th:block th:if="${#lists.isEmpty(alertas)}">
+        <div class="card card-zelo p-4">
+            <div th:replace="~{fragments/componentes :: vazio('bi-calendar-check', ${aba == 'pendentes'} ? 'Nenhum cuidado pendente. Tudo em dia!' : 'Nenhum cuidado concluído ou cancelado ainda.')}"></div>
+        </div>
+    </th:block>
 
     <div class="row g-3">
         <div class="col-md-6" th:each="a : ${alertas}">
-            <div class="card card-zelo p-3 h-100">
-                <div class="d-flex justify-content-between">
-                    <h5 th:text="${a.titulo}">Titulo</h5>
-                    <span class="badge text-bg-secondary" th:text="${a.statusAlerta}"></span>
+            <article class="card card-zelo p-3 h-100" th:classappend="${a.atrasado} ? 'card-atrasado'">
+                <div class="d-flex justify-content-between gap-2">
+                    <h2 class="h5 mb-0" th:text="${a.titulo}">Título</h2>
+                    <span th:replace="~{fragments/componentes :: statusAlerta(${a})}"></span>
                 </div>
-                <p class="small text-muted mb-1">
-                    <span th:text="${a.pet.nome}">Pet</span> ·
-                    <span th:text="${a.tipoAlerta}"></span> ·
-                    previsto para <span th:text="${#temporals.format(a.dataPrevista, 'dd/MM/yyyy')}"></span>
+                <p class="small text-muted my-2">
+                    <a th:href="@{'/tutor/pets/' + ${a.pet.id}}" th:text="${a.pet.nome}">Pet</a> ·
+                    <span th:text="${a.tipoAlerta.rotulo}">Tipo</span> ·
+                    previsto para <strong th:text="${#temporals.format(a.dataPrevista, 'dd/MM/yyyy')}">data</strong>
                 </p>
                 <p th:if="${a.mensagem}" th:text="${a.mensagem}">Mensagem</p>
-                <p class="small text-muted" th:if="${a.clinica != null}">Recomendado por: <span th:text="${a.clinica.nome}"></span></p>
-                <div class="d-flex gap-2 mt-2">
-                    <form th:action="@{'/tutor/alertas/' + ${a.id} + '/confirmar'}" method="post">
-                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-sm btn-zelo">Confirmar realizado</button>
-                    </form>
-                    <form th:action="@{'/tutor/alertas/' + ${a.id} + '/cancelar'}" method="post">
-                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Cancelar</button>
-                    </form>
+                <p class="small text-muted" th:text="${a.recomendadoPorClinica} ? 'Recomendado por ' + ${a.clinica.nome} : 'Lembrete pessoal'">Origem</p>
+                <div class="d-flex gap-2 mt-auto" th:if="${a.statusAlerta.aberto}">
+                    <form th:replace="~{fragments/componentes :: acao('/tutor/alertas/' + ${a.id} + '/confirmar', 'Confirmar realizado', 'btn-zelo', 'bi-check2', null)}"></form>
+                    <form th:replace="~{fragments/componentes :: acao('/tutor/alertas/' + ${a.id} + '/cancelar', 'Cancelar', 'btn-outline-danger', 'bi-x-lg', 'Cancelar este cuidado?')}"></form>
                 </div>
-            </div>
+            </article>
         </div>
     </div>
 </main>
-
-<div th:replace="~{fragments/scripts :: scripts}"></div>
 </body>
 </html>

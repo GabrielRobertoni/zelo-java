@@ -1,0 +1,9 @@
+# Garante fins de linha corretos mesmo quando o commit é feito pelo Windows.
+* text=auto
+mvnw text eol=lf
+*.sh text eol=lf
+*.cmd text eol=crlf
+*.png binary
+*.jar binary
+# Evidências de outras disciplinas (ex.: script do time de BD) ficam byte a byte como foram entregues.
+docs/evidencias/** -text

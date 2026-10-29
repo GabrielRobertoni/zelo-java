@@ -9,17 +9,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
-/**
- * Corresponde a tabela T_CH_PET_TUTOR (schema real do time de Banco de
- * Dados): implementa o recurso Multi-Tutor (varios tutores podem acompanhar
- * o mesmo pet).
- *
- * IMPORTANTE: diferente da modelagem original assumida antes de recebermos
- * o DDL real (zelo_criar.sql), esta tabela usa chave primaria substituta
- * (id_pet_tutor, auto-gerada) em vez de chave composta (id_pet, id_tutor) -
- * o par (id_pet, id_tutor) e apenas uma constraint UNIQUE. Por isso a
- * entidade usa um "Long id" simples, sem @EmbeddedId/@MapsId.
- */
+/** Vínculo N:N entre pet e tutor (T_CH_PET_TUTOR), com chave substituta e par (pet, tutor) único. */
 @Entity
 @Table(name = "T_CH_PET_TUTOR")
 @Getter

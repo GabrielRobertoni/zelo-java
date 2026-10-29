@@ -16,10 +16,7 @@ import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Corresponde a tabela T_CH_PET (schema real do time de Banco de Dados):
- * entidade central do acompanhamento longitudinal do Zelo.
- */
+/** Animal acompanhado pela plataforma (T_CH_PET); pode ter mais de um tutor via PetTutor. */
 @Entity
 @Table(name = "T_CH_PET")
 @Getter
@@ -68,10 +65,14 @@ public class Pet {
         return "S".equalsIgnoreCase(castrado);
     }
 
-    public Integer getIdadeAnos() {
+    public String getIdadeDescricao() {
         if (dataNascimento == null) {
-            return null;
+            return "Idade não informada";
         }
-        return Period.between(dataNascimento, LocalDate.now()).getYears();
+        Period idade = Period.between(dataNascimento, LocalDate.now());
+        if (idade.getYears() > 0) {
+            return idade.getYears() + (idade.getYears() == 1 ? " ano" : " anos");
+        }
+        return idade.getMonths() + (idade.getMonths() == 1 ? " mês" : " meses");
     }
 }

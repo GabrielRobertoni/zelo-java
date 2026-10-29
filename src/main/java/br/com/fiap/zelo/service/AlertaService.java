@@ -5,152 +5,130 @@ import br.com.fiap.zelo.domain.Clinica;
 import br.com.fiap.zelo.domain.Pet;
 import br.com.fiap.zelo.domain.enums.StatusAlerta;
 import br.com.fiap.zelo.exception.RecursoNaoEncontradoException;
-import br.com.fiap.zelo.exception.RegraNegocioException;
 import br.com.fiap.zelo.repository.AlertaRepository;
 import br.com.fiap.zelo.repository.ClinicaRepository;
 import br.com.fiap.zelo.repository.PetRepository;
 import br.com.fiap.zelo.web.dto.AlertaForm;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
-/**
- * Fluxo completo nº 2 exigido pela Sprint 3 de Java Advanced: "Alertas e
- * Plano de Cuidado" (Ciclo Zelo). Cobre criacao (pelo tutor, como lembrete
- * pessoal, ou pela clinica, como recomendacao clinica), disparo e
- * confirmacao, ate o cancelamento quando aplicavel.
- */
+/** Fluxo "Plano de Cuidado": lembretes do tutor e recomendações da clínica até a confirmação. */
 @Service
 @Transactional
 public class AlertaService {
 
-    private static final List<StatusAlerta> STATUS_PENDENTES = List.of(StatusAlerta.PENDENTE, StatusAlerta.ENVIADO);
+    public static final Set<StatusAlerta> ABERTOS = EnumSet.of(StatusAlerta.PENDENTE, StatusAlerta.ENVIADO);
+    public static final Set<StatusAlerta> FINALIZADOS = EnumSet.of(StatusAlerta.CONCLUIDO, StatusAlerta.CANCELADO);
+
+    private static final Sort PROXIMOS_PRIMEIRO = Sort.by(Sort.Direction.ASC, "dataPrevista");
+    private static final Sort RECENTES_PRIMEIRO = Sort.by(Sort.Direction.DESC, "dataPrevista");
 
     private final AlertaRepository alertaRepository;
     private final PetRepository petRepository;
     private final ClinicaRepository clinicaRepository;
+    private final PetService petService;
+    private final PacienteService pacienteService;
 
-    public AlertaService(AlertaRepository alertaRepository, PetRepository petRepository, ClinicaRepository clinicaRepository) {
+    public AlertaService(AlertaRepository alertaRepository, PetRepository petRepository,
+                         ClinicaRepository clinicaRepository, PetService petService, PacienteService pacienteService) {
         this.alertaRepository = alertaRepository;
         this.petRepository = petRepository;
         this.clinicaRepository = clinicaRepository;
+        this.petService = petService;
+        this.pacienteService = pacienteService;
     }
 
     public Alerta criarComoTutor(Long tutorId, AlertaForm form) {
-        Pet pet = validarPetDoTutor(form.getPetId(), tutorId);
-        Alerta alerta = montarBase(pet, form);
-        alerta.setClinica(null);
-        return alertaRepository.save(alerta);
+        Pet pet = petService.buscarDoTutor(form.getPetId(), tutorId);
+        return alertaRepository.save(montar(pet, null, form));
     }
 
+    /** A clínica só recomenda cuidados para os próprios pacientes. */
     public Alerta criarComoClinica(Long clinicaId, AlertaForm form) {
-        Pet pet = petRepository.findById(form.getPetId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Pet nao encontrado."));
+        Pet pet = pacienteService.buscarPaciente(form.getPetId(), clinicaId);
         Clinica clinica = clinicaRepository.findById(clinicaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Clinica nao encontrada."));
-        Alerta alerta = montarBase(pet, form);
-        alerta.setClinica(clinica);
-        return alertaRepository.save(alerta);
-    }
-
-    private Pet validarPetDoTutor(Long petId, Long tutorId) {
-        if (!petRepository.existeVinculoComTutor(petId, tutorId)) {
-            throw new RecursoNaoEncontradoException("Este pet nao pertence ao tutor autenticado.");
-        }
-        return petRepository.findById(petId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Pet nao encontrado."));
-    }
-
-    private Alerta montarBase(Pet pet, AlertaForm form) {
-        return Alerta.builder()
-                .pet(pet)
-                .tipoAlerta(form.getTipoAlerta())
-                .titulo(form.getTitulo())
-                .mensagem(form.getMensagem())
-                .dataPrevista(form.getDataPrevista())
-                .statusAlerta(StatusAlerta.PENDENTE)
-                .build();
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Clínica não encontrada."));
+        return alertaRepository.save(montar(pet, clinica, form));
     }
 
     @Transactional(readOnly = true)
-    public List<Alerta> pendentesDoTutor(Long tutorId) {
-        return alertaRepository.findPendentesPorTutor(tutorId, STATUS_PENDENTES);
+    public List<Alerta> abertosDoTutor(Long tutorId) {
+        return alertaRepository.findDoTutor(tutorId, ABERTOS, PROXIMOS_PRIMEIRO);
     }
 
     @Transactional(readOnly = true)
-    public List<Alerta> daClinica(Long clinicaId) {
-        return alertaRepository.findByClinicaIdOrderByDataPrevistaAsc(clinicaId);
+    public List<Alerta> historicoDoTutor(Long tutorId) {
+        return alertaRepository.findDoTutor(tutorId, FINALIZADOS, RECENTES_PRIMEIRO);
     }
 
     @Transactional(readOnly = true)
-    public List<Alerta> doPet(Long petId) {
-        return alertaRepository.findByPetIdOrderByDataPrevistaAsc(petId);
+    public List<Alerta> abertosDaClinica(Long clinicaId) {
+        return alertaRepository.findDaClinica(clinicaId, ABERTOS, PROXIMOS_PRIMEIRO);
     }
 
-    /** A clinica dispara a notificacao ao tutor (simula o envio do lembrete). */
+    @Transactional(readOnly = true)
+    public List<Alerta> historicoDaClinica(Long clinicaId) {
+        return alertaRepository.findDaClinica(clinicaId, FINALIZADOS, RECENTES_PRIMEIRO);
+    }
+
     public Alerta marcarComoEnviado(Long alertaId, Long clinicaId) {
-        Alerta alerta = buscarDaClinica(alertaId, clinicaId);
-        if (alerta.getStatusAlerta() != StatusAlerta.PENDENTE) {
-            throw new RegraNegocioException("Somente alertas pendentes podem ser marcados como enviados.");
-        }
-        alerta.setStatusAlerta(StatusAlerta.ENVIADO);
-        alerta.setDataEnvio(LocalDateTime.now());
-        return alertaRepository.save(alerta);
+        return alterarNaClinica(alertaId, clinicaId, Alerta::marcarComoEnviado);
+    }
+
+    public Alerta cancelarPelaClinica(Long alertaId, Long clinicaId) {
+        return alterarNaClinica(alertaId, clinicaId, Alerta::cancelar);
     }
 
     /** O tutor confirma que o cuidado foi realizado, fechando o ciclo. */
     public Alerta confirmar(Long alertaId, Long tutorId) {
-        Alerta alerta = buscarDoTutor(alertaId, tutorId);
-        if (alerta.getStatusAlerta() == StatusAlerta.CONCLUIDO || alerta.getStatusAlerta() == StatusAlerta.CANCELADO) {
-            throw new RegraNegocioException("Este alerta ja foi finalizado.");
-        }
-        alerta.setStatusAlerta(StatusAlerta.CONCLUIDO);
-        return alertaRepository.save(alerta);
+        return alterarDoTutor(alertaId, tutorId, Alerta::concluir);
     }
 
     public Alerta cancelarPeloTutor(Long alertaId, Long tutorId) {
-        Alerta alerta = buscarDoTutor(alertaId, tutorId);
-        garantirNaoFinalizado(alerta);
-        alerta.setStatusAlerta(StatusAlerta.CANCELADO);
-        return alertaRepository.save(alerta);
+        return alterarDoTutor(alertaId, tutorId, Alerta::cancelar);
     }
 
-    public Alerta cancelarPelaClinica(Long alertaId, Long clinicaId) {
-        Alerta alerta = buscarDaClinica(alertaId, clinicaId);
-        garantirNaoFinalizado(alerta);
-        alerta.setStatusAlerta(StatusAlerta.CANCELADO);
-        return alertaRepository.save(alerta);
-    }
-
-    /** Exclusao usada pela API do aplicativo mobile (o tutor remove um lembrete pessoal). */
+    /** Usado pelo aplicativo mobile para o tutor remover um lembrete. */
     public void excluirPeloTutor(Long alertaId, Long tutorId) {
+        alertaRepository.delete(buscarDoTutor(alertaId, tutorId));
+    }
+
+    private Alerta montar(Pet pet, Clinica clinica, AlertaForm form) {
+        return Alerta.novo(pet, clinica, form.getTipoAlerta(), form.getTitulo().trim(),
+                Normalizador.textoOuNulo(form.getMensagem()), form.getDataPrevista());
+    }
+
+    private Alerta alterarNaClinica(Long alertaId, Long clinicaId, Consumer<Alerta> transicao) {
+        Alerta alerta = buscar(alertaId);
+        if (!alerta.pertenceAClinica(clinicaId)) {
+            throw new RecursoNaoEncontradoException("Este alerta não pertence à sua clínica.");
+        }
+        transicao.accept(alerta);
+        return alertaRepository.save(alerta);
+    }
+
+    private Alerta alterarDoTutor(Long alertaId, Long tutorId, Consumer<Alerta> transicao) {
         Alerta alerta = buscarDoTutor(alertaId, tutorId);
-        alertaRepository.delete(alerta);
-    }
-
-    private void garantirNaoFinalizado(Alerta alerta) {
-        if (alerta.getStatusAlerta() == StatusAlerta.CONCLUIDO || alerta.getStatusAlerta() == StatusAlerta.CANCELADO) {
-            throw new RegraNegocioException("Este alerta ja foi finalizado.");
-        }
-    }
-
-    private Alerta buscarDaClinica(Long alertaId, Long clinicaId) {
-        Alerta alerta = alertaRepository.findById(alertaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Alerta nao encontrado."));
-        if (alerta.getClinica() == null || !alerta.getClinica().getId().equals(clinicaId)) {
-            throw new RecursoNaoEncontradoException("Este alerta nao pertence a clinica autenticada.");
-        }
-        return alerta;
+        transicao.accept(alerta);
+        return alertaRepository.save(alerta);
     }
 
     private Alerta buscarDoTutor(Long alertaId, Long tutorId) {
-        Alerta alerta = alertaRepository.findById(alertaId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Alerta nao encontrado."));
+        Alerta alerta = buscar(alertaId);
         if (!petRepository.existeVinculoComTutor(alerta.getPet().getId(), tutorId)) {
-            throw new RecursoNaoEncontradoException("Este alerta nao pertence a um pet do tutor autenticado.");
+            throw new RecursoNaoEncontradoException("Este alerta não pertence a um pet seu.");
         }
         return alerta;
+    }
+
+    private Alerta buscar(Long alertaId) {
+        return alertaRepository.findById(alertaId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Alerta não encontrado."));
     }
 }

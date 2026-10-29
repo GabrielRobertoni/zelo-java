@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head><title>Algo deu errado</title></head>
+<body>
+<main layout:fragment="conteudo">
+    <section th:replace="~{fragments/componentes :: erro(${status} ?: '500', 'bi-tools', 'Algo deu errado', 'Ocorreu um erro inesperado. Tente novamente em instantes.')}"></section>
+</main>
+</body>
+</html>

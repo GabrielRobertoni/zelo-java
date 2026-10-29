@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="description" content="Zelo: cuidado contínuo para pets, conectando tutores e clínicas veterinárias."/>
+    <meta name="theme-color" content="#14493d"/>
+    <title layout:title-pattern="$CONTENT_TITLE · Zelo">Zelo</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Poppins:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/app.css}" rel="stylesheet"/>
+</head>
+<body th:classappend="${#authorization.expression('isAuthenticated()')} ? 'area-logada' : 'area-publica'">
+<a class="visually-hidden-focusable pular-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+<th:block th:with="logado=${#authorization.expression('isAuthenticated()')}">
+    <th:block th:if="${logado}" th:with="caminho=${caminhoAtual ?: ''}, usuario=${#authentication.principal.usuario}">
+        <th:block th:replace="~{fragments/nav :: menuLateral}"></th:block>
+    </th:block>
+    <th:block th:unless="${logado}">
+        <nav th:replace="~{fragments/nav :: barraSuperior}"></nav>
+    </th:block>
+</th:block>
+
+<div class="area-conteudo">
+    <div th:replace="~{fragments/mensagens :: mensagens}"></div>
+    <main id="conteudo" layout:fragment="conteudo"></main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/app.js}"></script>
+<th:block layout:fragment="scripts"></th:block>
+</body>
+</html>

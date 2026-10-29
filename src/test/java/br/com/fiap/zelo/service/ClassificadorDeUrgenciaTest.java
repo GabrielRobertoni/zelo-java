@@ -10,12 +10,6 @@ import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Testa a regra de negocio deterministica de classificacao de urgencia
- * (fluxo "Triagem e Encaminhamento"). Nao depende de Spring nem de banco de
- * dados - e uma unidade pura, o que a torna a mais rapida e confiavel da
- * suite.
- */
 class ClassificadorDeUrgenciaTest {
 
     private final ClassificadorDeUrgencia classificador = new ClassificadorDeUrgencia();
@@ -79,6 +73,18 @@ class ClassificadorDeUrgenciaTest {
         var resultado = classificador.classificar(relatoComMuitasPalavrasGraves);
 
         assertThat(resultado.scoreRisco()).isEqualByComparingTo(new BigDecimal("100"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"A gata foi atropelada", "Minha cadela parece intoxicada", "A Luna está engasgada"})
+    void reconheceFormasFemininasDeEmergencia(String relato) {
+        assertThat(classificador.classificar(relato).nivelUrgencia()).isEqualTo(NivelUrgencia.EMERGENCIA);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Ela está espirrando muito", "Está tossindo desde ontem", "A gata está apática"})
+    void reconheceFormasVerbaisEFemininasDeMediaUrgencia(String relato) {
+        assertThat(classificador.classificar(relato).nivelUrgencia()).isEqualTo(NivelUrgencia.MEDIA);
     }
 
     @ParameterizedTest

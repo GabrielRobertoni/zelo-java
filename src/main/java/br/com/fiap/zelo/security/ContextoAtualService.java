@@ -8,11 +8,7 @@ import br.com.fiap.zelo.service.ClinicaService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Resolve o Tutor ou a Clinica associados ao usuario autenticado. Centraliza
- * essa consulta para que os controllers nao dupliquem a mesma logica de
- * lookup (evita repeticao apontada como penalidade de qualidade de codigo).
- */
+/** Resolve o Tutor ou a Clínica do usuário autenticado, evitando repetir essa busca nos controllers. */
 @Component
 public class ContextoAtualService {
 
@@ -27,11 +23,19 @@ public class ContextoAtualService {
     @Transactional(readOnly = true)
     public Tutor tutorAtual(ZeloUserPrincipal principal) {
         return tutorRepository.findByUsuarioId(principal.getUsuarioId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Perfil de tutor nao encontrado para o usuario autenticado."));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Perfil de tutor não encontrado para o usuário autenticado."));
+    }
+
+    public Long tutorIdAtual(ZeloUserPrincipal principal) {
+        return tutorAtual(principal).getId();
     }
 
     @Transactional(readOnly = true)
     public Clinica clinicaAtual(ZeloUserPrincipal principal) {
         return clinicaService.obterClinicaDoUsuario(principal.getUsuarioId());
+    }
+
+    public Long clinicaIdAtual(ZeloUserPrincipal principal) {
+        return clinicaAtual(principal).getId();
     }
 }
