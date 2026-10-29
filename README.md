@@ -4,9 +4,9 @@ Aplicação web em Spring Boot desenvolvida para a disciplina de **Java Advanced
 
 | Entrega | Link |
 |---|---|
-| Aplicação online | **[preencher com a URL do Render após o deploy]** |
+| Aplicação online | **[https://zelo-java.onrender.com]** |
 | Vídeo de apresentação | **[preencher com o link do vídeo]** |
-| Repositório | **[preencher com a URL do repositório]** |
+| Repositório | **[https://github.com/GabrielRobertoni/zelo-java]** |
 
 > Para testar na hora, entre com uma das [contas de demonstração](#contas-de-demonstração). A senha de todas é `Zelo@123`.
 
