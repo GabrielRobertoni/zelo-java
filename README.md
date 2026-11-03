@@ -4,9 +4,9 @@ Aplicação web em Spring Boot desenvolvida para a disciplina de **Java Advanced
 
 | Entrega | Link |
 |---|---|
-| Aplicação online | **[https://zelo-java.onrender.com]** |
+| Aplicação online | **<https://zelo-java.onrender.com>** (plano gratuito: o primeiro acesso após um período sem uso pode levar alguns minutos) |
 | Vídeo de apresentação | **[preencher com o link do vídeo]** |
-| Repositório | **[https://github.com/GabrielRobertoni/zelo-java]** |
+| Repositório | **<https://github.com/GabrielRobertoni/zelo-java>** |
 
 > Para testar na hora, entre com uma das [contas de demonstração](#contas-de-demonstração). A senha de todas é `Zelo@123`.
 
@@ -168,7 +168,7 @@ As contagens vêm de **consultas agregadas no banco** (`group by` com *construct
 | **Feedback a cada ação** | Toda ação mostra uma mensagem de sucesso ou do motivo da recusa (ex.: "Não é possível cancelar uma triagem já finalizada."). Depois de agir no painel, o usuário **volta para a mesma tela**. |
 | **Formulários que ajudam** | As mensagens de validação aparecem embaixo de cada campo, em português, e **o que foi digitado é preservado**. Há dicas nos campos (ex.: CNPJ só com números, UF com 2 letras) e o login já vem com o e-mail preenchido depois do cadastro. |
 | **Prevenção de erros** | Ações destrutivas (cancelar, desativar acesso, gerar novo convite, excluir pet) pedem confirmação. O botão é desabilitado após o clique, evitando envio duplicado. Pets com histórico não exibem a opção de excluir. |
-| **Demonstração sem atrito** | Contas de demonstração preenchem o login com um clique, e a massa de dados é recriada a cada inicialização, com datas relativas ao dia. |
+| **Demonstração sem atrito** | Contas de demonstração preenchem o login com um clique. A massa de demonstração já vem cadastrada, com datas relativas ao dia em que foi criada (no banco embutido, ela é recriada a cada inicialização). |
 | **Responsiva e acessível** | Layout Bootstrap testado em 1366 px e 390 px (celular) sem rolagem horizontal, `lang="pt-BR"`, link "Pular para o conteúdo", `aria-label` nos gráficos e no menu, foco visível e contraste da paleta verde/creme. |
 | **Consistência por construção** | Um único layout (Thymeleaf Layout Dialect) e fragmentos reutilizáveis (campos, botões de ação, selos, gráficos, linha do tempo e estados vazios) garantem que todas as telas se comportem igual. |
 
@@ -475,23 +475,17 @@ src/main/resources/db/migration/
 
 ## Integração com as demais disciplinas
 
-> **Atenção, grupo:** confiram esta seção e completem os links (marcados com ✏️) com os artefatos de cada disciplina antes da entrega.
-
 | Disciplina | Como aparece no Zelo | Evidência |
 |---|---|---|
-| **Mastering Relational and Non-Relational Database** | Modelo `T_CH_*`, nomes, tipos e `CHECK`s idênticos aos do script do time de BD. Perfil `oracle` roda sobre esse script, sem alterá-lo, com Flyway. As triagens criadas pelo Java são auditadas pela trigger `TRG_T_CH_AUDITORIA_TRIAGEM` e exportadas em JSON pelo package `PKG_T_CH_ZELO`. | Script do time de BD: [`docs/evidencias/banco/2TDSR_CodigoSql_Zelo.sql`](docs/evidencias/banco/2TDSR_CodigoSql_Zelo.sql). `db/migration/`, seção [Modelo de dados](#modelo-de-dados-diagrama-de-relacionamento). ✏️ print das tabelas no SQL Developer |
+| **Mastering Relational and Non-Relational Database** | Modelo `T_CH_*`, nomes, tipos e `CHECK`s idênticos aos do script do time de BD. A aplicação, inclusive a versão publicada no Render, grava no **Oracle da FIAP** do grupo, sobre esse script e sem alterá-lo, com as migrations próprias versionadas pelo Flyway. | Script do time de BD: [`docs/evidencias/banco/2TDSR_CodigoSql_Zelo.sql`](docs/evidencias/banco/2TDSR_CodigoSql_Zelo.sql). Log do Render conectado ao Oracle: [print](docs/evidencias/render-log-oracle.png). Migrations: `src/main/resources/db/migration/oracle/`. |
 | **Mobile Application Development** | API REST (`/api/**`) com JWT, consumida pelo app React Native/Expo: login, cadastro, pets, triagens, alertas e clínicas. | [`docs/API_MOBILE.md`](docs/API_MOBILE.md). ✏️ link do repositório do app |
-| **Disruptive Architectures (IoT, IoB & Generative AI)** | O classificador de urgência é a linha de base determinística e auditável. O campo `ds_analise_visual` e os canais `AUDIO`/`IMAGEM` já estão previstos para receber a análise do modelo de IA. | `ClassificadorDeUrgencia`. ✏️ link do protótipo de IA |
-| **DevOps Tools & Cloud Computing** | Dockerfile multi-stage, deploy no Render (`render.yaml`) e *health check* do Actuator. | `Dockerfile`, `render.yaml` |
-| **Compliance, Quality Assurance & Tests** | Suíte com testes unitários, de repositório e de integração ponta a ponta. Privacidade por design: "paciente", convite e posse do dado. | [Testes automatizados](#testes-automatizados) |
-| ✏️ **Demais disciplinas** | ✏️ descrever | ✏️ link |
 
 ## Como executar
 
 **Pré-requisito:** JDK 17 ou superior. Não precisa instalar Maven nem banco de dados.
 
 ```bash
-git clone <URL-DO-REPOSITORIO>
+git clone https://github.com/GabrielRobertoni/zelo-java.git
 cd zelo-java
 ./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 ```
@@ -565,7 +559,11 @@ A suíte roda sobre um H2 novo e isolado, criado pelas **mesmas migrations** da 
 
 ## Deploy
 
-O passo a passo completo está em [`docs/DEPLOY.md`](docs/DEPLOY.md). Resumo: o Render lê o `render.yaml`, constrói a imagem pelo `Dockerfile`, gera o `ZELO_JWT_SECRET` e monitora `/actuator/health`. No plano gratuito, o serviço "dorme" depois de 15 minutos sem acesso. O primeiro acesso seguinte leva cerca de 1 minuto e recria a massa de demonstração.
+A aplicação está publicada em **<https://zelo-java.onrender.com>**. O passo a passo completo está em [`docs/DEPLOY.md`](docs/DEPLOY.md). Resumo: o Render lê o `render.yaml`, constrói a imagem pelo `Dockerfile`, gera o `ZELO_JWT_SECRET` e monitora `/actuator/health`. Ao iniciar, a aplicação encontra o Oracle da FIAP e passa a usá-lo, como mostra o log abaixo. No plano gratuito, o serviço "dorme" depois de 15 minutos sem acesso, e o primeiro acesso seguinte leva alguns minutos.
+
+| Log do Render: conexão com o Oracle da FIAP | Aplicação no ar |
+|---|---|
+| ![Log do Render](docs/evidencias/render-log-oracle.png) | ![Site no ar](docs/evidencias/site-no-ar-render.png) |
 
 ## O que mudou desde a Sprint 3
 
