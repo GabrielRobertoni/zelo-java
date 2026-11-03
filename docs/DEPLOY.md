@@ -27,9 +27,9 @@ Para o site no Render usar sempre o H2 (dados de demonstração zerados a cada r
 
 ## Comportamento do plano gratuito
 
-- O serviço **dorme após 15 minutos sem acesso**. O próximo acesso leva cerca de 1 minuto para acordar. **Abra o link uns minutos antes de gravar o vídeo ou de apresentar.**
-- Ao reiniciar, o banco em memória é recriado com a massa de demonstração. As datas das triagens são relativas ao dia, então os painéis sempre têm dados recentes.
-- Contas e dados criados durante os testes somem quando o serviço reinicia. Para a demonstração isso é uma vantagem: o ambiente está sempre limpo.
+- O serviço **dorme após 15 minutos sem acesso**. O próximo acesso leva alguns minutos para acordar, porque a aplicação reconecta ao Oracle. **Abra o link uns minutos antes de gravar o vídeo ou de apresentar.**
+- Conectado ao Oracle, os dados ficam salvos entre reinícios: contas, pets e triagens criados nos testes continuam lá.
+- Se o serviço estiver usando o H2 (Oracle indisponível ou `ZELO_ORACLE=false`), o banco em memória é recriado a cada reinício com a massa de demonstração.
 
 ## Atualizações
 
