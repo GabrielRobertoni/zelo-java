@@ -90,7 +90,12 @@ Além das rotas, cada serviço confere **a quem o dado pertence**. Um tutor não
 
 ### Fluxo 1: Triagem e encaminhamento
 
-```mermaid
+<img src="docs/img/diagrama-01-sequencia-triagem.png" alt="Sequência do fluxo de triagem" width="700"/>
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```text
 sequenceDiagram
     actor T as Tutor
     participant Z as Zelo
@@ -105,7 +110,14 @@ sequenceDiagram
     V->>Z: Recomendar cuidado (inicia o fluxo 2)
 ```
 
-```mermaid
+</details>
+
+<img src="docs/img/diagrama-02-estados-triagem.png" alt="Estados da triagem" width="420"/>
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```text
 stateDiagram-v2
     [*] --> ABERTA
     ABERTA --> ENCAMINHADA: clínica encaminha
@@ -117,11 +129,18 @@ stateDiagram-v2
     CANCELADA --> [*]
 ```
 
+</details>
+
 O classificador procura palavras-chave no relato, sem diferenciar acentos nem maiúsculas. A palavra mais grave define o nível (emergência 90, alta 65, média 40, baixa 15), e cada palavra adicional soma 3 pontos, até o máximo de 100. Ele reconhece formas femininas e verbais, como "intoxicad**a**" e "espirr**ando**".
 
 ### Fluxo 2: Plano de cuidado
 
-```mermaid
+<img src="docs/img/diagrama-03-estados-alerta.png" alt="Estados do alerta" width="380"/>
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```text
 stateDiagram-v2
     [*] --> PENDENTE: tutor cria lembrete ou clínica recomenda
     PENDENTE --> ENVIADO: clínica envia o lembrete
@@ -132,6 +151,8 @@ stateDiagram-v2
     CONCLUIDO --> [*]
     CANCELADO --> [*]
 ```
+
+</details>
 
 Um alerta aberto com a data prevista já vencida aparece como **Atrasado** em todas as telas e alimenta os indicadores.
 
@@ -194,7 +215,12 @@ As contagens vêm de **consultas agregadas no banco** (`group by` com *construct
 
 ## Arquitetura
 
-```mermaid
+![Arquitetura em camadas](docs/img/diagrama-04-arquitetura.png)
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```text
 flowchart LR
     subgraph Clientes
         N[Navegador<br/>Thymeleaf + Bootstrap + Chart.js]
@@ -216,11 +242,18 @@ flowchart LR
     S --> R --> DB
 ```
 
+</details>
+
 Fluxo de uma requisição: **Tela → Controller → DTO validado → Service → Domínio/Repository → Banco**.
 
 ## Diagrama de classes
 
-```mermaid
+![Diagrama de classes do domínio](docs/img/diagrama-05-classes-dominio.png)
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```text
 classDiagram
     direction LR
     class Usuario {
@@ -303,9 +336,16 @@ classDiagram
     Clinica "0..1" -- "*" Alerta : recomenda
 ```
 
+</details>
+
 Principais serviços e as dependências entre eles:
 
-```mermaid
+![Diagrama dos serviços](docs/img/diagrama-06-classes-servicos.png)
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```text
 classDiagram
     direction TB
     class CadastroService { +registrarTutor() +registrarGestor() +registrarVeterinario() +criarUsuario() }
@@ -334,11 +374,18 @@ classDiagram
     PainelTutorService --> AlertaService
 ```
 
+</details>
+
 ## Modelo de dados (diagrama de relacionamento)
 
 As tabelas seguem o padrão do time de Banco de Dados (`T_CH_*`, prefixos `id_`, `nm_`, `ds_`, `tp_`, `st_`, `dt_`, `dh_`, `vl_`, `fl_`), com as mesmas constraints `CHECK`.
 
-```mermaid
+![Modelo de dados (diagrama de relacionamento)](docs/img/diagrama-07-modelo-de-dados.png)
+
+<details>
+<summary>Código-fonte do diagrama (Mermaid)</summary>
+
+```text
 erDiagram
     T_CH_USUARIO ||--o| T_CH_TUTOR : "especializa"
     T_CH_USUARIO ||--o{ T_CH_CLINICA_EQUIPE : "integra"
@@ -420,6 +467,8 @@ erDiagram
         VARCHAR2 st_alerta
     }
 ```
+
+</details>
 
 ## Decisões de design e tecnologia
 
