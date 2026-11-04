@@ -5,7 +5,7 @@ Aplicação web em Spring Boot desenvolvida para a disciplina de **Java Advanced
 | Entrega | Link |
 |---|---|
 | Aplicação online | **<https://zelo-java.onrender.com>** (plano gratuito: o primeiro acesso após um período sem uso pode levar alguns minutos) |
-| Vídeo de apresentação | **[preencher com o link do vídeo]** |
+| Vídeo de apresentação | **<https://youtu.be/b9czI40SzG4>** |
 | Repositório | **<https://github.com/GabrielRobertoni/zelo-java>** |
 
 > Para testar na hora, entre com uma das [contas de demonstração](#contas-de-demonstração). A senha de todas é `Zelo@123`.
