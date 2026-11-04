@@ -478,7 +478,13 @@ src/main/resources/db/migration/
 | Disciplina | Como aparece no Zelo | Evidência |
 |---|---|---|
 | **Mastering Relational and Non-Relational Database** | Modelo `T_CH_*`, nomes, tipos e `CHECK`s idênticos aos do script do time de BD. A aplicação, inclusive a versão publicada no Render, grava no **Oracle da FIAP** do grupo, sobre esse script e sem alterá-lo, com as migrations próprias versionadas pelo Flyway. | Script do time de BD: [`docs/evidencias/banco/2TDSR_CodigoSql_Zelo.sql`](docs/evidencias/banco/2TDSR_CodigoSql_Zelo.sql). Log do Render conectado ao Oracle: [print](docs/evidencias/render-log-oracle.png). Migrations: `src/main/resources/db/migration/oracle/`. |
-| **Mobile Application Development** | API REST (`/api/**`) com JWT, consumida pelo app React Native/Expo: login, cadastro, pets, triagens, alertas e clínicas. | [`docs/API_MOBILE.md`](docs/API_MOBILE.md). ✏️ link do repositório do app |
+| **Mobile Application Development** | API REST (`/api/**`) com JWT, consumida pelo app React Native/Expo: login, cadastro, pets, triagens, alertas e clínicas. O app usa o mesmo backend publicado no Render e os mesmos dados do Oracle (na tela abaixo, a tutora Carla com os pets Rex e Mia, iguais aos do sistema web). | [`docs/API_MOBILE.md`](docs/API_MOBILE.md). Prints do app: [painel do tutor](docs/evidencias/mobile-painel-tutor.jpg) e [meus pets](docs/evidencias/mobile-meus-pets.jpg). |
+
+**O app mobile consumindo a API do Zelo**
+
+| Painel do tutor | Meus pets |
+|---|---|
+| <img src="docs/evidencias/mobile-painel-tutor.jpg" alt="Painel do tutor no app mobile" width="250"/> | <img src="docs/evidencias/mobile-meus-pets.jpg" alt="Lista de pets no app mobile" width="250"/> |
 
 ## Como executar
 
